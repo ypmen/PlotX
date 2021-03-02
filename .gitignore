@@ -33,6 +33,7 @@
 *.out
 *.app
 
+examples/example
 
 # http://www.gnu.org/software/automake
 
