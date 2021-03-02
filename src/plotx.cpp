@@ -264,8 +264,8 @@ Axes & Axes::axvline(float x, float ymin, float ymax, const std::map<std::string
 
     std::unique_ptr<PAxvline> line(new PAxvline);
     line->x = x;
-    line->_ymin = _ymin+(ymin-0)*(_ymax-_ymin);
-    line->_ymax = _ymin+(ymax-0)*(_ymax-_ymin);
+    line->_ymin = ymin;
+    line->_ymax = ymax;
 
     for (auto item=options.begin(); item!=options.end(); ++item)
     {
@@ -317,8 +317,8 @@ Axes & Axes::axhline(float y, float xmin, float xmax, const std::map<std::string
 
     std::unique_ptr<PAxhline> line(new PAxhline);
     line->y = y;
-    line->_xmin = _xmin+(xmin-0)*(_xmax-_xmin);
-    line->_xmax = _xmin+(xmax-0)*(_xmax-_xmin);
+    line->_xmin = xmin;
+    line->_xmax = xmax;
 
     for (auto item=options.begin(); item!=options.end(); ++item)
     {
@@ -1069,28 +1069,34 @@ PAxvline & PAxvline::draw(bool logx, bool logy)
     /* set color */
     cpgsci(get_color(color));
 
+    float xmin_win, xmax_win, ymin_win, ymax_win;
+    cpgqwin(&xmin_win, &xmax_win, &ymin_win, &ymax_win);
+
+    float ymin = ymin_win+(_ymin-0)*(ymax_win-ymin_win);
+    float ymax = ymin_win+(_ymax-0)*(ymax_win-ymin_win);
+
     if (logx && !logy)
     {
         float xdata[2] = {std::log10(x), std::log10(x)};
-        float ydata[2] = {_ymin, _ymax};
+        float ydata[2] = {ymin, ymax};
         cpgline(2, xdata, ydata);
     }
     else if (!logx && logy)
     {
         float xdata[2] = {x, x};
-        float ydata[2] = {std::log10(_ymin), std::log10(_ymax)};
+        float ydata[2] = {std::log10(ymin), std::log10(ymax)};
         cpgline(2, xdata, ydata);
     }
     else if (logx && logy)
     {
         float xdata[2] = {std::log10(x), std::log10(x)};
-        float ydata[2] = {std::log10(_ymin), std::log10(_ymax)};
+        float ydata[2] = {std::log10(ymin), std::log10(ymax)};
         cpgline(2, xdata, ydata);
     }
     else
     {
         float xdata[2] = {x, x};
-        float ydata[2] = {_ymin, _ymax};
+        float ydata[2] = {ymin, ymax};
         cpgline(2, xdata, ydata);
     }
 
@@ -1112,8 +1118,6 @@ void PAxvline::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
 {
     xmin = x;
     xmax = x;
-    ymin = std::numeric_limits<float>::max();
-    ymax = std::numeric_limits<float>::min();
 }
 
 /*================== PAxhline =================*/
@@ -1130,28 +1134,35 @@ PAxhline & PAxhline::draw(bool logx, bool logy)
     /* set color */
     cpgsci(get_color(color));
 
+    float xmin_win, xmax_win, ymin_win, ymax_win;
+    cpgqwin(&xmin_win, &xmax_win, &ymin_win, &ymax_win);
+
+    float xmin = xmin_win+(_xmin-0)*(xmax_win-xmin_win);
+    float xmax = xmin_win+(_xmax-0)*(xmax_win-xmin_win);
+
+
     if (logy && !logx)
     {
         float ydata[2] = {std::log10(y), std::log10(y)};
-        float xdata[2] = {_xmin, _xmax};
+        float xdata[2] = {xmin, xmax};
         cpgline(2, xdata, ydata);
     }
     else if (!logy && logx)
     {
         float ydata[2] = {y, y};
-        float xdata[2] = {std::log10(_xmin), std::log10(_xmax)};
+        float xdata[2] = {std::log10(xmin), std::log10(xmax)};
         cpgline(2, xdata, ydata);
     }
     else if (logx && logy)
     {
         float ydata[2] = {std::log10(y), std::log10(y)};
-        float xdata[2] = {std::log10(_xmin), std::log10(_xmax)};
+        float xdata[2] = {std::log10(xmin), std::log10(xmax)};
         cpgline(2, xdata, ydata);
     }
     else
     {
         float ydata[2] = {y, y};
-        float xdata[2] = {_xmin, _xmax};
+        float xdata[2] = {xmin, xmax};
         cpgline(2, xdata, ydata);
     }
 
