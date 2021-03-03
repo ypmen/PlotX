@@ -371,8 +371,8 @@ Axes & Axes::axvspan(float xmin, float xmax, float ymin, float ymax, const std::
     std::unique_ptr<PAxvspan> span(new PAxvspan);
     span->_xmin = xmin;
     span->_xmax = xmax;
-    span->_ymin = _ymin+(ymin-0)*(_ymax-_ymin);
-    span->_ymax = _ymin+(ymax-0)*(_ymax-_ymin);
+    span->_ymin = ymin;
+    span->_ymax = ymax;
 
     for (auto item=options.begin(); item!=options.end(); ++item)
     {
@@ -429,8 +429,8 @@ Axes & Axes::axvhpan(float ymin, float ymax, float xmin, float xmax, const std::
     std::unique_ptr<PAxhspan> span(new PAxhspan);
     span->_ymin = ymin;
     span->_ymax = ymax;
-    span->_xmin = _xmin+(xmin-0)*(_xmax-_xmin);
-    span->_xmax = _xmin+(xmax-0)*(_xmax-_xmin);
+    span->_xmin = xmin;
+    span->_xmax = xmax;
 
     span->filled = "true";
 
@@ -837,6 +837,22 @@ Axes & Axes::draw()
     cpgsvp(_left, _right, _bottom, _top);
 
     get_win();
+    if (_xmin == std::numeric_limits<float>::max())
+    {
+        _xmin = 1.;
+    }
+    if (_xmax == std::numeric_limits<float>::min())
+    {
+        _xmax = 10.;
+    }
+    if (_ymin == std::numeric_limits<float>::max())
+    {
+        _ymin = 1.;
+    }
+    if (_ymax == std::numeric_limits<float>::min())
+    {
+        _ymax = 10.;
+    }
 
     float xmin, xmax, ymin, ymax;
     /* plots */
@@ -1084,13 +1100,13 @@ PAxvline & PAxvline::draw(bool logx, bool logy)
     else if (!logx && logy)
     {
         float xdata[2] = {x, x};
-        float ydata[2] = {std::log10(ymin), std::log10(ymax)};
+        float ydata[2] = {ymin, ymax};
         cpgline(2, xdata, ydata);
     }
     else if (logx && logy)
     {
         float xdata[2] = {std::log10(x), std::log10(x)};
-        float ydata[2] = {std::log10(ymin), std::log10(ymax)};
+        float ydata[2] = {ymin, ymax};
         cpgline(2, xdata, ydata);
     }
     else
@@ -1140,7 +1156,6 @@ PAxhline & PAxhline::draw(bool logx, bool logy)
     float xmin = xmin_win+(_xmin-0)*(xmax_win-xmin_win);
     float xmax = xmin_win+(_xmax-0)*(xmax_win-xmin_win);
 
-
     if (logy && !logx)
     {
         float ydata[2] = {std::log10(y), std::log10(y)};
@@ -1150,13 +1165,13 @@ PAxhline & PAxhline::draw(bool logx, bool logy)
     else if (!logy && logx)
     {
         float ydata[2] = {y, y};
-        float xdata[2] = {std::log10(xmin), std::log10(xmax)};
+        float xdata[2] = {xmin, xmax};
         cpgline(2, xdata, ydata);
     }
     else if (logx && logy)
     {
         float ydata[2] = {std::log10(y), std::log10(y)};
-        float xdata[2] = {std::log10(xmin), std::log10(xmax)};
+        float xdata[2] = {xmin, xmax};
         cpgline(2, xdata, ydata);
     }
     else
@@ -1184,8 +1199,6 @@ void PAxhline::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
 {
     ymin = y;
     ymax = y;
-    xmin = std::numeric_limits<float>::max();
-    xmax = std::numeric_limits<float>::min();
 }
 
 /*================== PAxvspan =================*/
@@ -1205,21 +1218,27 @@ PAxvspan & PAxvspan::draw(bool logx, bool logy)
     /* set filled */
     cpgsfs(get_filled(filled));
 
+    float xmin_win, xmax_win, ymin_win, ymax_win;
+    cpgqwin(&xmin_win, &xmax_win, &ymin_win, &ymax_win);
+
+    float ymin = ymin_win+(_ymin-0)*(ymax_win-ymin_win);
+    float ymax = ymin_win+(_ymax-0)*(ymax_win-ymin_win);
+
     if (logx && !logy)
     {
-       cpgrect(std::log10(_xmin), std::log10(_xmax), _ymin, _ymax);
+       cpgrect(std::log10(_xmin), std::log10(_xmax), ymin, ymax);
     }
     else if (!logx && logy)
     {
-        cpgrect(_xmin, _xmax, std::log10(_ymin), std::log10(_ymax));
+        cpgrect(_xmin, _xmax, ymin, ymax);
     }
     else if (logx && logy)
     {
-        cpgrect(std::log10(_xmin), std::log10(_xmax), std::log10(_ymin), std::log10(_ymax));
+        cpgrect(std::log10(_xmin), std::log10(_xmax), ymin, ymax);
     }
     else
     {
-        cpgrect(_xmin, _xmax, _ymin, _ymax);
+        cpgrect(_xmin, _xmax, ymin, ymax);
     }
 
     cpgunsa();
@@ -1240,8 +1259,6 @@ void PAxvspan::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
 {
     xmin = _xmin;
     xmax = _xmax;
-    ymin = _ymin;
-    ymax = _ymax;
 }
 
 /*================== PAxhspan =================*/
@@ -1261,21 +1278,27 @@ PAxhspan & PAxhspan::draw(bool logx, bool logy)
     /* set filled */
     cpgsfs(get_filled(filled));
 
+    float xmin_win, xmax_win, ymin_win, ymax_win;
+    cpgqwin(&xmin_win, &xmax_win, &ymin_win, &ymax_win);
+
+    float xmin = xmin_win+(_xmin-0)*(xmax_win-xmin_win);
+    float xmax = xmin_win+(_xmax-0)*(xmax_win-xmin_win);
+
     if (logx && !logy)
     {
-       cpgrect(std::log10(_xmin), std::log10(_xmax), _ymin, _ymax);
+       cpgrect(xmin, xmax, _ymin, _ymax);
     }
     else if (!logx && logy)
     {
-        cpgrect(_xmin, _xmax, std::log10(_ymin), std::log10(_ymax));
+        cpgrect(xmin, xmax, std::log10(_ymin), std::log10(_ymax));
     }
     else if (logx && logy)
     {
-        cpgrect(std::log10(_xmin), std::log10(_xmax), std::log10(_ymin), std::log10(_ymax));
+        cpgrect(xmin, xmax, std::log10(_ymin), std::log10(_ymax));
     }
     else
     {
-        cpgrect(_xmin, _xmax, _ymin, _ymax);
+        cpgrect(xmin, xmax, _ymin, _ymax);
     }
 
     cpgunsa();
@@ -1294,8 +1317,6 @@ PAxhspan * PAxhspan::clone()
 
 void PAxhspan::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
 {
-    xmin = _xmin;
-    xmax = _xmax;
     ymin = _ymin;
     ymax = _ymax;
 }
@@ -1378,7 +1399,7 @@ PPoint & PPoint::draw(bool logx, bool logy)
     else if (logx && logy)
         cpgpt1(std::log10(x), std::log10(y), get_symbol(marker));
     else
-        cpgpt1(x, x, get_symbol(marker));
+        cpgpt1(x, y, get_symbol(marker));
 
     cpgunsa();
 
