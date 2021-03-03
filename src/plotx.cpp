@@ -1819,8 +1819,8 @@ Figure::Figure()
     _width = 0.;
     _aspect = 0.;
 
-    _background_color = "white";
-    _defalut_color = "black";
+    _background_color = "black";
+    _defalut_color = "white";
 }
 
 Figure::Figure(float width, float aspect)
@@ -1828,8 +1828,8 @@ Figure::Figure(float width, float aspect)
     _width = width;
     _aspect = aspect;
 
-    _background_color = "white";
-    _defalut_color = "black";
+    _background_color = "black";
+    _defalut_color = "white";
 }
 
 Figure::~Figure(){}
