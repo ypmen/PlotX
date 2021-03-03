@@ -361,7 +361,7 @@ namespace PlotX
         Axes & axvline(float x, float ymin=0., float ymax=1., const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
         Axes & axhline(float y, float xmin=0., float xmax=1., const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
         Axes & axvspan(float xmin, float xmax, float ymin=0., float ymax=1., const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
-        Axes & axvhpan(float ymin, float ymax, float xmin=0., float xmax=1., const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
+        Axes & axhspan(float ymin, float ymax, float xmin=0., float xmax=1., const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
         Axes & scatter(const std::vector<float> &xdata, const std::vector<float> &ydata, const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
         Axes & circle(float x, float y, float size=1., const std::string &color="red");
         Axes & cross(float x, float y, float size=1., const std::string &color="red");
@@ -434,8 +434,8 @@ namespace PlotX
         Figure(float width, float aspect);
         ~Figure();
         Figure & push(const Axes &ax);
-        Figure & set_background_color(const std::string &color){ _background_color = color;}
-        Figure & set_defalut_color(const std::string &color){_defalut_color = color;}
+        Figure & set_background_color(const std::string &color){ _background_color = color; return *this;}
+        Figure & set_defalut_color(const std::string &color){_defalut_color = color; return *this;}
         Figure & show();
         Figure & save(const std::string &fname);
     private:

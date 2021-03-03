@@ -31,7 +31,7 @@ int main()
         y2[i] = 100/x[i];
     }
     ax.axvspan(pow(10, 1.5-0.05), pow(10, 1.5+0.05), 0., 1., {{"facecolor", "b"}, {"filled", "none"}});
-    ax.axvhpan(pow(10, 1.5-0.05), pow(10, 1.5+0.05), 0., 1., {{"facecolor", "y"}});
+    ax.axhspan(pow(10, 1.5-0.05), pow(10, 1.5+0.05), 0., 1., {{"facecolor", "y"}});
     ax.plot(x, y1, {{"linestyle", "--"}, {"linewidth", "10"}, {"color", "r"}});
     ax.scatter(x, y2, {{"markersize", "1"}, {"color", "y"}, {"marker", "0"}});
     ax.circle(pow(10, 0.25), pow(10, 1), 5);

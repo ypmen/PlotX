@@ -403,7 +403,7 @@ Axes & Axes::axvspan(float xmin, float xmax, float ymin, float ymax, const std::
     return *this;    
 }
 
-Axes & Axes::axvhpan(float ymin, float ymax, float xmin, float xmax, const std::map<std::string, std::string> &options)
+Axes & Axes::axhspan(float ymin, float ymax, float xmin, float xmax, const std::map<std::string, std::string> &options)
 {
     if (xmin < 0.)
     {
