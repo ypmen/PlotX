@@ -1605,6 +1605,11 @@ PText & PText::draw(bool logx, bool logy)
     float left=0., right=1., bottom=0., top=1.;
     cpgqvp(0, &left, &right, &bottom, &top);
 
+    float x1, x2, y1, y2;
+    cpgqvsz(1, &x1, &x2, &y1, &y2);
+    float width = std::abs(x2-x1);
+    float height = std::abs(y2-y1);
+
     /* set color */
     cpgsci(get_color(color));
 
@@ -1641,13 +1646,19 @@ PText & PText::draw(bool logx, bool logy)
         {
             side = "T";
             coord = x;
-            disp = (y-1.)*40./get_height(fontsize);
+            if (height < width)
+                disp = (y-1.)*40./get_height(fontsize);
+            else
+                disp = (y-1.)*40./get_height(fontsize)/width*height;
         }
         else if (stof(rotation) == 270. or stof(rotation) == -90.)
         {
             side = "R";
             coord = y;
-            disp = (x-1.)*40./get_height(fontsize);
+            if (width < height)
+                disp = (x-1.)*40./get_height(fontsize);
+            else
+                disp = (x-1.)*40./get_height(fontsize)/height*width;
         }
 
         cpgsvp(0., 1., 0., 1.);
@@ -1663,13 +1674,19 @@ PText & PText::draw(bool logx, bool logy)
         {
             side = "T";
             coord = x;
-            disp = (y-1.)*(top-bottom)*40./get_height(fontsize);
+            if (height < width)
+                disp = (y-1.)*(top-bottom)*40./get_height(fontsize);
+            else
+                disp = (y-1.)*(top-bottom)*40./get_height(fontsize)/width*height;
         }
         else if (stof(rotation) == 270. or stof(rotation) == -90.)
         {
             side = "R";
             coord = y;
-            disp = (x-1.)*(right-left)*40./get_height(fontsize);
+            if (width < height)
+                disp = (x-1.)*(right-left)*40./get_height(fontsize);
+            else
+                disp = (x-1.)*(right-left)*40./get_height(fontsize)/height*width;
         }
 
         cpgmtxt(side.c_str(), disp, coord, fjust, text.c_str());
