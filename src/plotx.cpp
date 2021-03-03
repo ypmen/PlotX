@@ -1818,12 +1818,18 @@ Figure::Figure()
 {
     _width = 0.;
     _aspect = 0.;
+
+    _background_color = "white";
+    _defalut_color = "black";
 }
 
 Figure::Figure(float width, float aspect)
 {
     _width = width;
     _aspect = aspect;
+
+    _background_color = "white";
+    _defalut_color = "black";
 }
 
 Figure::~Figure(){}
@@ -1835,11 +1841,21 @@ Figure & Figure::push(const Axes &ax)
     return *this;
 }
 
-bool Figure::show()
+Figure & Figure::show()
 {
-    if (!cpgopen("/XW")) return false;
+    if (!cpgopen("/XW")) return *this;
 
     cpgpap(_width, _aspect);
+    
+    float r, g, b;
+    
+    /* set background color */
+    get_rgb(r, g, b, _background_color);
+    cpgscr(0, r, g, b);
+
+    /* set defalut color */
+    get_rgb(r, g, b, _defalut_color);
+    cpgscr(1, r, g, b);
 
     for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
     {
@@ -1848,17 +1864,24 @@ bool Figure::show()
     
     cpgclos();
 
-    return true;
+    return *this;
 }
 
-bool Figure::save(const std::string &fname)
+Figure & Figure::save(const std::string &fname)
 {
-    if (!cpgopen(fname.c_str())) return false;
+    if (!cpgopen(fname.c_str())) return *this;
     
     cpgpap(_width, _aspect);
 
-    cpgscr(0, 1, 1, 1);
-    cpgscr(1, 0, 0, 0);
+    float r, g, b;
+
+    /* set background color */
+    get_rgb(r, g, b, _background_color);
+    cpgscr(0, r, g, b);
+
+    /* set defalut color */
+    get_rgb(r, g, b, _defalut_color);
+    cpgscr(1, r, g, b);
 
     for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
     {
@@ -1867,7 +1890,7 @@ bool Figure::save(const std::string &fname)
 
     cpgclos();
 
-    return true;
+    return *this;
 }
 
 int PlotX::get_linestyle(const std::string &linestyle)
@@ -2050,6 +2073,12 @@ int PlotX::get_color(const std::string &color)
         std::cerr<<"Warning: color not supported"<<std::endl;
         return 1;
     }
+}
+
+void PlotX::get_rgb(float &r, float &g, float &b, const std::string &color)
+{
+   int ci = get_color(color);
+   cpgqcr(ci, &r, &g, &b);
 }
 
 int PlotX::get_filled(const std::string &filled)

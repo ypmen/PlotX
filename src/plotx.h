@@ -28,8 +28,8 @@ namespace PlotX
     float get_height(const std::string &height);
     int get_color(const std::string &color);
     int get_filled(const std::string &filled);
+    void get_rgb(float &r, float &g, float &b, const std::string &color);
     void set_cmap(const std::string &cmap, const std::vector<std::vector<float>> &cm_data=std::vector<std::vector<float>>());
-   
     class PPlot
     {
     public:
@@ -434,11 +434,15 @@ namespace PlotX
         Figure(float width, float aspect);
         ~Figure();
         Figure & push(const Axes &ax);
-        bool show();
-        bool save(const std::string &fname);
+        Figure & set_background_color(const std::string &color){ _background_color = color;}
+        Figure & set_defalut_color(const std::string &color){_defalut_color = color;}
+        Figure & show();
+        Figure & save(const std::string &fname);
     private:
         float _width;
         float _aspect;
+        std::string _background_color;
+        std::string _defalut_color;
         std::vector<Axes> axes;
     };
 }
