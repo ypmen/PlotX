@@ -14,7 +14,7 @@
 
 int main()
 {
-    PlotX::Figure fig;
+    PlotX::Figure fig(8, 0.75);
 
     PlotX::Axes ax(0.05, 0.45, 0.55, 0.9);
     ax.label(true, true, true, true);
