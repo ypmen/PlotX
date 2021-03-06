@@ -11,5 +11,5 @@ This is a matplotlib-like c++ wrapper for pgplot!
 - make install
 
 ## Usage
-- Check examples directory for some [examples]examples/example.cpp).
+- Check examples directory for some [examples](examples/example.cpp).
 ![](examples/example.png)
