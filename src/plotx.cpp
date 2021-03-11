@@ -55,6 +55,9 @@ Axes::Axes()
 
     _autoscalex = false;
     _autoscaley = false;
+
+    _xlimits = false;
+    _ylimits = false;
 }
 
 Axes::Axes(float left, float right, float bottom, float top)
@@ -96,6 +99,9 @@ Axes::Axes(float left, float right, float bottom, float top)
     _autoscaley = false;
 
     _axis = false;
+
+    _xlimits = false;
+    _ylimits = false;
 }
 
 Axes::Axes(const Axes &ax)
@@ -142,6 +148,9 @@ Axes::Axes(const Axes &ax)
 
     _autoscalex = ax._autoscalex;
     _autoscaley = ax._autoscaley;
+
+    _xlimits = ax._xlimits;
+    _ylimits = ax._ylimits;
 
     _xlabel = ax._xlabel;
     _ylabel = ax._ylabel;
@@ -192,6 +201,9 @@ Axes & Axes::operator=(const Axes &ax)
 
     _autoscalex = ax._autoscalex;
     _autoscaley = ax._autoscaley;
+
+    _xlimits = ax._xlimits;
+    _ylimits = ax._ylimits;
 
     _xlabel = ax._xlabel;
     _ylabel = ax._ylabel;
@@ -836,7 +848,6 @@ Axes & Axes::draw()
 {
     cpgsvp(_left, _right, _bottom, _top);
 
-    get_win();
     if (_xmin == std::numeric_limits<float>::max())
     {
         _xmin = 1.;
@@ -950,10 +961,17 @@ void Axes::get_win()
 {
     if (plots.empty())
     {
-        _xmin = 0.;
-        _xmax = 1.;
-        _ymin = 0.;
-        _ymax = 1.;
+        if (!_xlimits)
+        {
+            _xmin = 0.;
+            _xmax = 1.;
+        }
+
+        if (!_ylimits)
+        {
+            _ymin = 0.;
+            _ymax = 1.;
+        }
     }
 
     for (auto p=plots.begin(); p!=plots.end(); ++p)
@@ -1001,10 +1019,16 @@ void Axes::get_win()
             }
         }
 
-        _xmin = xmin < _xmin ? xmin : _xmin;
-        _xmax = xmax > _xmax ? xmax : _xmax;
-        _ymin = ymin < _ymin ? ymin : _ymin;
-        _ymax = ymax > _ymax ? ymax : _ymax;
+        if (!_xlimits)
+        {
+            _xmin = xmin < _xmin ? xmin : _xmin;
+            _xmax = xmax > _xmax ? xmax : _xmax;
+        }
+        if (!_ylimits)
+        {
+            _ymin = ymin < _ymin ? ymin : _ymin;
+            _ymax = ymax > _ymax ? ymax : _ymax;
+        }
     }
 }
 
@@ -1834,8 +1858,10 @@ Figure::Figure(float width, float aspect)
 
 Figure::~Figure(){}
 
-Figure & Figure::push(const Axes &ax)
+Figure & Figure::push(Axes &ax)
 {
+    ax.get_win();
+
     axes.push_back(ax);
 
     return *this;

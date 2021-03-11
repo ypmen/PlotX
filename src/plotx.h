@@ -351,7 +351,44 @@ namespace PlotX
         Axes & majorticks_on(){_majorticks = true; return *this;}
         Axes & majorticks_off(){_majorticks = false; return *this;}
         Axes & axis_on(){_axis = true; return *this;}
-        Axes & axis_off(){_axis = false; return *this;}        
+        Axes & axis_off(){_axis = false; return *this;} 
+        Axes & clear()
+        {
+            plots.clear();
+            plots.shrink_to_fit();
+
+            return *this;
+        }
+        Axes & set_xlim(float xmin, float xmax)
+        {
+            _xmin = xmin;
+            _xmax = xmax;
+            _xlimits = true;
+
+            return *this;
+        }
+        Axes & set_ylim(float ymin, float ymax)
+        {
+            _ymin = ymin;
+            _ymax = ymax;
+            _ylimits = true;
+
+            return *this;
+        }
+        Axes & get_xlim(float &xmin, float &xmax)
+        {
+            xmin = _xmin;
+            xmax = _xmax;
+
+            return *this;
+        }
+        Axes & get_ylim(float &ymin, float &ymax)
+        {
+            ymin = _ymin;
+            ymax = _ymax;
+
+            return *this;
+        }
     public:
         Axes & set_xlabel(const std::string &xlabel){_xlabel = xlabel; return *this;}
         Axes & set_ylabel(const std::string &ylabel){_ylabel = ylabel; return *this;}
@@ -377,6 +414,7 @@ namespace PlotX
         Axes & draw();
     private:
         void get_opt(std::string &xopt, std::string &yopt);
+    public:
         void get_win();
     private:
         std::vector<std::unique_ptr<PPlot>> plots;
@@ -422,6 +460,9 @@ namespace PlotX
         bool _autoscalex;
         bool _autoscaley;
 
+        bool _xlimits;
+        bool _ylimits;
+
         std::string _xlabel;
         std::string _ylabel;
         std::string _title;
@@ -433,11 +474,18 @@ namespace PlotX
         Figure();
         Figure(float width, float aspect);
         ~Figure();
-        Figure & push(const Axes &ax);
+        Figure & push(Axes &ax);
         Figure & set_background_color(const std::string &color){ _background_color = color; return *this;}
         Figure & set_defalut_color(const std::string &color){_defalut_color = color; return *this;}
         Figure & show();
         Figure & save(const std::string &fname);
+        Figure & clear()
+        {
+            axes.clear();
+            axes.shrink_to_fit();
+
+            return *this;
+        }
     private:
         float _width;
         float _aspect;
