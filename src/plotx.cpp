@@ -1450,10 +1450,10 @@ void PPoint::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
 /*================== PPoint =================*/
 PPcolor & PPcolor::draw(bool logx, bool logy)
 {
-    float xmin = *(std::min_element(xdata.begin(), xdata.end()));
-    float xmax = *(std::max_element(xdata.begin(), xdata.end()));
-    float ymin = *(std::min_element(ydata.begin(), ydata.end()));
-    float ymax = *(std::max_element(ydata.begin(), ydata.end()));
+    float xmin = xdata.front();
+    float xmax = xdata.back();
+    float ymin = ydata.front();
+    float ymax = ydata.back();
     float zmin = *(std::min_element(zdata.begin(), zdata.end()));
     float zmax = *(std::max_element(zdata.begin(), zdata.end()));
 
