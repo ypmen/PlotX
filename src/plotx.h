@@ -17,6 +17,8 @@
 #include <memory>
 #include <string>
 #include <sstream>
+#include <numeric>
+#include <algorithm>
 
 #include "cpgplot.h"
 
@@ -493,6 +495,49 @@ namespace PlotX
         std::string _defalut_color;
         std::vector<Axes> axes;
     };
+
+    void plot(const std::vector<float> &xdata, const std::vector<float> &ydata, const std::map<std::string, std::string> &options=std::map<std::string, std::string>())
+    {
+        Figure fig;
+        Axes ax(0.05, 0.98, 0.05, 0.98);
+        ax.plot(xdata, ydata, options);
+        fig.push(ax);
+        fig.show();
+    }
+
+    void plot(const std::vector<float> &ydata, const std::map<std::string, std::string> &options=std::map<std::string, std::string>())
+    {
+        std::vector<float> xdata(ydata.size());
+        std::iota(xdata.begin(), xdata.end(), 0);
+
+        Figure fig;
+        Axes ax(0.05, 0.98, 0.05, 0.98);
+        ax.plot(xdata, ydata, options);
+        fig.push(ax);
+        fig.show();
+    }
+
+    void pcolor(const std::vector<float> &xdata, const std::vector<float> &ydata, const std::vector<float> &zdata, const std::string &cmap="", const std::vector<std::vector<float>> &cm_data=std::vector<std::vector<float>>(), const std::map<std::string, std::string> &options=std::map<std::string, std::string>())
+    {
+        Figure fig;
+        Axes ax(0.05, 0.98, 0.05, 0.98);
+        ax.pcolor(xdata, ydata, zdata, "viridis");
+        fig.push(ax);
+        fig.show();
+    }
+
+    void pcolor(size_t xlen, size_t ylen, const std::vector<float> &zdata, const std::string &cmap="", const std::vector<std::vector<float>> &cm_data=std::vector<std::vector<float>>(), const std::map<std::string, std::string> &options=std::map<std::string, std::string>())
+    {
+        std::vector<float> xdata(xlen), ydata(ylen);
+        std::iota(xdata.begin(), xdata.end(), 0);
+        std::iota(ydata.begin(), ydata.end(), 0);
+
+        Figure fig;
+        Axes ax(0.05, 0.98, 0.05, 0.98);
+        ax.pcolor(xdata, ydata, zdata, "viridis");
+        fig.push(ax);
+        fig.show();
+    }
 }
 
 #endif /* PLOTX_H */
