@@ -2240,7 +2240,7 @@ void PlotX::set_cmap(const std::string &cmap, const std::vector<std::vector<floa
     }
 }
 
-void plot(const std::vector<float> &xdata, const std::vector<float> &ydata, const std::map<std::string, std::string> &options)
+void PlotX::plot(const std::vector<float> &xdata, const std::vector<float> &ydata, const std::map<std::string, std::string> &options)
 {
     Figure fig;
     Axes ax(0.05, 0.98, 0.05, 0.98);
@@ -2249,7 +2249,7 @@ void plot(const std::vector<float> &xdata, const std::vector<float> &ydata, cons
     fig.show();
 }
 
-void plot(const std::vector<float> &ydata, const std::map<std::string, std::string> &options)
+void PlotX::plot(const std::vector<float> &ydata, const std::map<std::string, std::string> &options)
 {
     std::vector<float> xdata(ydata.size());
     std::iota(xdata.begin(), xdata.end(), 0);
@@ -2261,7 +2261,7 @@ void plot(const std::vector<float> &ydata, const std::map<std::string, std::stri
     fig.show();
 }
 
-void pcolor(const std::vector<float> &xdata, const std::vector<float> &ydata, const std::vector<float> &zdata, const std::string &cmap, const std::vector<std::vector<float>> &cm_data, const std::map<std::string, std::string> &options)
+void PlotX::pcolor(const std::vector<float> &xdata, const std::vector<float> &ydata, const std::vector<float> &zdata, const std::string &cmap, const std::vector<std::vector<float>> &cm_data, const std::map<std::string, std::string> &options)
 {
     Figure fig;
     Axes ax(0.05, 0.98, 0.05, 0.98);
@@ -2270,7 +2270,7 @@ void pcolor(const std::vector<float> &xdata, const std::vector<float> &ydata, co
     fig.show();
 }
 
-void pcolor(size_t xlen, size_t ylen, const std::vector<float> &zdata, const std::string &cmap, const std::vector<std::vector<float>> &cm_data, const std::map<std::string, std::string> &options)
+void PlotX::pcolor(size_t xlen, size_t ylen, const std::vector<float> &zdata, const std::string &cmap, const std::vector<std::vector<float>> &cm_data, const std::map<std::string, std::string> &options)
 {
     std::vector<float> xdata(xlen), ydata(ylen);
     std::iota(xdata.begin(), xdata.end(), 0);
