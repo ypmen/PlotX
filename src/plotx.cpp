@@ -251,6 +251,38 @@ Axes & Axes::plot(const std::vector<float> &xdata, const std::vector<float> &yda
     return *this;
 }
 
+Axes & Axes::plot(const std::vector<float> &ydata, const std::map<std::string, std::string> &options)
+{
+    std::unique_ptr<PLine> line(new PLine);
+    line->xdata.resize(ydata.size());
+    std::iota(line->xdata.begin(), line->xdata.end(), 0);
+    line->ydata = ydata;
+
+    for (auto item=options.begin(); item!=options.end(); ++item)
+    {
+        if (item->first == "linestyle")
+        {
+            line->linestyle = item->second;
+        }
+        else if (item->first == "linewidth")
+        {
+            line->linewidth = item->second;
+        }
+        else if (item->first == "color")
+        {
+            line->color = item->second;
+        }
+        else
+        {
+            std::cerr<<"Warning: attribute not supported"<<std::endl;
+        }
+    }
+
+    plots.push_back(std::move(line));
+
+    return *this;
+}
+
 Axes & Axes::axvline(float x, float ymin, float ymax, const std::map<std::string, std::string> &options)
 {
     if (ymin < 0.)
@@ -559,6 +591,22 @@ Axes & Axes::pcolor(const std::vector<float> &xdata, const std::vector<float> &y
     std::unique_ptr<PPcolor> image(new PPcolor);
     image->xdata = xdata;
     image->ydata = ydata;
+    image->zdata = zdata;
+    image->cmap = cmap;
+    image->cm_data = cm_data;
+
+    plots.push_back(std::move(image));
+
+    return *this;
+}
+
+Axes & Axes::pcolor(size_t xlen, size_t ylen, const std::vector<float> &zdata, const std::string &cmap, const std::vector<std::vector<float>> &cm_data, const std::map<std::string, std::string> &options)
+{
+    std::unique_ptr<PPcolor> image(new PPcolor);
+    image->xdata.resize(xlen);
+    std::iota(image->xdata.begin(), image->xdata.end(), 0);
+    image->ydata.resize(ylen);
+    std::iota(image->ydata.begin(), image->ydata.end(), 0);
     image->zdata = zdata;
     image->cmap = cmap;
     image->cm_data = cm_data;

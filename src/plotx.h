@@ -397,6 +397,7 @@ namespace PlotX
         Axes & set_title(const std::string &title){_title = title; return *this;}
     public:
         Axes & plot(const std::vector<float> &xdata, const std::vector<float> &ydata, const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
+        Axes & plot(const std::vector<float> &ydata, const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
         Axes & axvline(float x, float ymin=0., float ymax=1., const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
         Axes & axhline(float y, float xmin=0., float xmax=1., const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
         Axes & axvspan(float xmin, float xmax, float ymin=0., float ymax=1., const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
@@ -406,6 +407,7 @@ namespace PlotX
         Axes & cross(float x, float y, float size=1., const std::string &color="red");
         Axes & point(float x, float y, float size=1., const std::string &color="red", const std::string &marker="1");
         Axes & pcolor(const std::vector<float> &xdata, const std::vector<float> &ydata, const std::vector<float> &zdata, const std::string &cmap="", const std::vector<std::vector<float>> &cm_data=std::vector<std::vector<float>>(), const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
+        Axes & pcolor(size_t xlen, size_t ylen, const std::vector<float> &zdata, const std::string &cmap="", const std::vector<std::vector<float>> &cm_data=std::vector<std::vector<float>>(), const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
         Axes & annotate(const std::string &text, float x, float y, const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
         Axes & errorbar(const std::vector<float> &xdata, const std::vector<float> &ydata, const std::vector<std::vector<float>> &yerr, const std::vector<std::vector<float>> &xerr=std::vector<std::vector<float>>(), const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
         Axes & errorbar(const std::vector<float> &xdata, const std::vector<float> &ydata, const std::vector<float> &yerr, const std::vector<float> &xerr=std::vector<float>(), const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
