@@ -395,6 +395,8 @@ namespace PlotX
         Axes & set_xlabel(const std::string &xlabel){_xlabel = xlabel; return *this;}
         Axes & set_ylabel(const std::string &ylabel){_ylabel = ylabel; return *this;}
         Axes & set_title(const std::string &title){_title = title; return *this;}
+        Axes & set_fontsize_label(const std::string &fontsize){_fontsize_label = fontsize; return *this;}
+        Axes & set_fontsize_ticklabel(const std::string &fontsize){_fontsize_ticklabel = fontsize; return *this;}
     public:
         Axes & plot(const std::vector<float> &xdata, const std::vector<float> &ydata, const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
         Axes & plot(const std::vector<float> &ydata, const std::map<std::string, std::string> &options=std::map<std::string, std::string>());
@@ -470,6 +472,9 @@ namespace PlotX
         std::string _xlabel;
         std::string _ylabel;
         std::string _title;
+
+        std::string _fontsize_label;
+        std::string _fontsize_ticklabel;
     };
 
     class Figure

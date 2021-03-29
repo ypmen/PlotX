@@ -154,7 +154,10 @@ Axes::Axes(const Axes &ax)
 
     _xlabel = ax._xlabel;
     _ylabel = ax._ylabel;
-    _title = ax._title;    
+    _title = ax._title;
+
+    _fontsize_label = ax._fontsize_label;
+    _fontsize_ticklabel = ax._fontsize_ticklabel;
 }
 
 Axes & Axes::operator=(const Axes &ax)
@@ -208,6 +211,9 @@ Axes & Axes::operator=(const Axes &ax)
     _xlabel = ax._xlabel;
     _ylabel = ax._ylabel;
     _title = ax._title;
+
+    _fontsize_label = ax._fontsize_label;
+    _fontsize_ticklabel = ax._fontsize_ticklabel;
 
     return *this;   
 }
@@ -951,14 +957,20 @@ Axes & Axes::draw()
         (*p)->draw(_logx, _logy);
     }
 
+    cpgsave();
+
     /* plot frame and ticks*/
     std::string xopt;
     std::string yopt;
     get_opt(xopt, yopt);
+    cpgsch(get_height(_fontsize_ticklabel));
     cpgbox(xopt.c_str(), 0., 0, yopt.c_str(), 0., 0);
 
     /* plot labels */
+    cpgsch(get_height(_fontsize_label));
     cpglab(_xlabel.c_str(), _ylabel.c_str(), _title.c_str());
+
+    cpgunsa();
 
     return *this;
 }
