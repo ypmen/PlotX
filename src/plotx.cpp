@@ -1947,15 +1947,14 @@ Figure & Figure::save(const std::string &fname)
     
     cpgpap(_width, _aspect);
 
-    float r, g, b;
+    float r0, g0, b0;
+    float r1, g1, b1;
 
-    /* set background color */
-    get_rgb(r, g, b, _background_color);
-    cpgscr(0, r, g, b);
-
-    /* set defalut color */
-    get_rgb(r, g, b, _defalut_color);
-    cpgscr(1, r, g, b);
+    /* set background color and defalut color*/
+    get_rgb(r0, g0, b0, _background_color);
+    get_rgb(r1, g1, b1, _defalut_color);
+    cpgscr(0, r0, g0, b0);
+    cpgscr(1, r1, g1, b1);
 
     for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
     {
