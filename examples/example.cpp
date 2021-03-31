@@ -16,7 +16,7 @@ int main()
 {
     PlotX::Figure fig(8, 0.75);
     fig.set_background_color("black");
-    fig.set_defalut_color("white");
+    fig.set_default_color("white");
 
     PlotX::Axes ax(0.05, 0.45, 0.55, 0.9);
     ax.label(true, true, true, true);
