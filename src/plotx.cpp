@@ -1904,7 +1904,7 @@ Figure::Figure()
     _aspect = 0.;
 
     _background_color = "black";
-    _defalut_color = "white";
+    _default_color = "white";
 }
 
 Figure::Figure(float width, float aspect)
@@ -1913,7 +1913,7 @@ Figure::Figure(float width, float aspect)
     _aspect = aspect;
 
     _background_color = "black";
-    _defalut_color = "white";
+    _default_color = "white";
 }
 
 Figure::~Figure(){}
@@ -1940,7 +1940,7 @@ Figure & Figure::show()
     cpgscr(0, r, g, b);
 
     /* set defalut color */
-    get_rgb(r, g, b, _defalut_color);
+    get_rgb(r, g, b, _default_color);
     cpgscr(1, r, g, b);
 
     for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
@@ -1964,7 +1964,7 @@ Figure & Figure::save(const std::string &fname)
 
     /* set background color and defalut color*/
     get_rgb(r0, g0, b0, _background_color);
-    get_rgb(r1, g1, b1, _defalut_color);
+    get_rgb(r1, g1, b1, _default_color);
     cpgscr(0, r0, g0, b0);
     cpgscr(1, r1, g1, b1);
 

@@ -485,7 +485,7 @@ namespace PlotX
         ~Figure();
         Figure & push(Axes &ax);
         Figure & set_background_color(const std::string &color){ _background_color = color; return *this;}
-        Figure & set_defalut_color(const std::string &color){_defalut_color = color; return *this;}
+        Figure & set_defalut_color(const std::string &color){_default_color = color; return *this;}
         Figure & show();
         Figure & save(const std::string &fname);
         Figure & clear()
@@ -499,7 +499,7 @@ namespace PlotX
         float _width;
         float _aspect;
         std::string _background_color;
-        std::string _defalut_color;
+        std::string _default_color;
         std::vector<Axes> axes;
     };
 
