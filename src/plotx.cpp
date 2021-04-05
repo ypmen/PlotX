@@ -6,10 +6,18 @@
  * @desc [description]
  */
 
+#include "config.h"
+
 #include <iostream>
 #include <algorithm>
 #include <limits>
 #include <cmath>
+#include <stdio.h>
+#include <string.h>
+
+#ifdef HAVE_LIBCFITSIO
+    #include <fitsio.h>
+#endif
 
 #include "plotx.h"
 
@@ -18,6 +26,9 @@ using namespace PlotX;
 /*================== Axes =================*/
 Axes::Axes()
 {
+    cnt = 0;
+    id = 0;
+
     _left = 0.;
     _right = 1.;
     _bottom = 0.;
@@ -58,10 +69,16 @@ Axes::Axes()
 
     _xlimits = false;
     _ylimits = false;
+
+    _fontsize_label = "1";
+    _fontsize_ticklabel = "1";
 }
 
 Axes::Axes(float left, float right, float bottom, float top)
 {
+    cnt = 0;
+    id = 0;
+
     _left = left;
     _right = right;
     _bottom = bottom;
@@ -102,10 +119,16 @@ Axes::Axes(float left, float right, float bottom, float top)
 
     _xlimits = false;
     _ylimits = false;
+
+    _fontsize_label = "1";
+    _fontsize_ticklabel = "1";
 }
 
 Axes::Axes(const Axes &ax)
 {
+    cnt = ax.cnt;
+    id = ax.id;
+
     for (auto p=ax.plots.begin(); p!=ax.plots.end(); ++p)
     {
         plots.push_back(std::unique_ptr<PPlot>(p->get()->clone()));
@@ -162,6 +185,9 @@ Axes::Axes(const Axes &ax)
 
 Axes & Axes::operator=(const Axes &ax)
 {
+    cnt = ax.cnt;
+    id = ax.id;
+
     for (auto p=ax.plots.begin(); p!=ax.plots.end(); ++p)
     {
         plots.push_back(std::unique_ptr<PPlot>(p->get()->clone()));
@@ -229,6 +255,8 @@ Axes & Axes::plot(const std::vector<float> &xdata, const std::vector<float> &yda
     }
 
     std::unique_ptr<PLine> line(new PLine);
+    line->axesid = id;
+    line->id = ++cnt;
     line->xdata = xdata;
     line->ydata = ydata;
 
@@ -260,6 +288,8 @@ Axes & Axes::plot(const std::vector<float> &xdata, const std::vector<float> &yda
 Axes & Axes::plot(const std::vector<float> &ydata, const std::map<std::string, std::string> &options)
 {
     std::unique_ptr<PLine> line(new PLine);
+    line->axesid = id;
+    line->id = ++cnt;
     line->xdata.resize(ydata.size());
     std::iota(line->xdata.begin(), line->xdata.end(), 0);
     line->ydata = ydata;
@@ -313,6 +343,8 @@ Axes & Axes::axvline(float x, float ymin, float ymax, const std::map<std::string
     }
 
     std::unique_ptr<PAxvline> line(new PAxvline);
+    line->axesid = id;
+    line->id = ++cnt;
     line->x = x;
     line->_ymin = ymin;
     line->_ymax = ymax;
@@ -366,6 +398,8 @@ Axes & Axes::axhline(float y, float xmin, float xmax, const std::map<std::string
     }
 
     std::unique_ptr<PAxhline> line(new PAxhline);
+    line->axesid = id;
+    line->id = ++cnt;
     line->y = y;
     line->_xmin = xmin;
     line->_xmax = xmax;
@@ -419,6 +453,8 @@ Axes & Axes::axvspan(float xmin, float xmax, float ymin, float ymax, const std::
     }
 
     std::unique_ptr<PAxvspan> span(new PAxvspan);
+    span->axesid = id;
+    span->id = ++cnt;
     span->_xmin = xmin;
     span->_xmax = xmax;
     span->_ymin = ymin;
@@ -477,6 +513,8 @@ Axes & Axes::axhspan(float ymin, float ymax, float xmin, float xmax, const std::
     }
 
     std::unique_ptr<PAxhspan> span(new PAxhspan);
+    span->axesid = id;
+    span->id = ++cnt;
     span->_ymin = ymin;
     span->_ymax = ymax;
     span->_xmin = xmin;
@@ -522,6 +560,8 @@ Axes & Axes::scatter(const std::vector<float> &xdata, const std::vector<float> &
     }
 
     std::unique_ptr<PScatter> scatter(new PScatter);
+    scatter->axesid = id;
+    scatter->id = ++cnt;
     scatter->xdata = xdata;
     scatter->ydata = ydata;
 
@@ -553,6 +593,8 @@ Axes & Axes::scatter(const std::vector<float> &xdata, const std::vector<float> &
 Axes & Axes::circle(float x, float y, float size, const std::string &color)
 {
     std::unique_ptr<PPoint> circle(new PPoint);
+    circle->axesid = id;
+    circle->id = ++cnt;
     circle->x = x;
     circle->y = y;
     circle->marker = "4";
@@ -567,6 +609,8 @@ Axes & Axes::circle(float x, float y, float size, const std::string &color)
 Axes & Axes::cross(float x, float y, float size, const std::string &color)
 {
     std::unique_ptr<PPoint> cross(new PPoint);
+    cross->axesid = id;
+    cross->id = ++cnt;
     cross->x = x;
     cross->y = y;
     cross->marker = "2";
@@ -581,6 +625,8 @@ Axes & Axes::cross(float x, float y, float size, const std::string &color)
 Axes & Axes::point(float x, float y, float size, const std::string &color, const std::string &marker)
 {
     std::unique_ptr<PPoint> point(new PPoint);
+    point->axesid = id;
+    point->id = ++cnt;
     point->x = x;
     point->y = y;
     point->marker = marker;
@@ -595,6 +641,8 @@ Axes & Axes::point(float x, float y, float size, const std::string &color, const
 Axes & Axes::pcolor(const std::vector<float> &xdata, const std::vector<float> &ydata, const std::vector<float> &zdata, const std::string &cmap, const std::vector<std::vector<float>> &cm_data, const std::map<std::string, std::string> &options)
 {
     std::unique_ptr<PPcolor> image(new PPcolor);
+    image->axesid = id;
+    image->id = ++cnt;
     image->xdata = xdata;
     image->ydata = ydata;
     image->zdata = zdata;
@@ -609,6 +657,8 @@ Axes & Axes::pcolor(const std::vector<float> &xdata, const std::vector<float> &y
 Axes & Axes::pcolor(size_t xlen, size_t ylen, const std::vector<float> &zdata, const std::string &cmap, const std::vector<std::vector<float>> &cm_data, const std::map<std::string, std::string> &options)
 {
     std::unique_ptr<PPcolor> image(new PPcolor);
+    image->axesid = id;
+    image->id = ++cnt;
     image->xdata.resize(xlen);
     std::iota(image->xdata.begin(), image->xdata.end(), 0);
     image->ydata.resize(ylen);
@@ -625,6 +675,8 @@ Axes & Axes::pcolor(size_t xlen, size_t ylen, const std::vector<float> &zdata, c
 Axes & Axes::annotate(const std::string &text, float x, float y, const std::map<std::string, std::string> &options)
 {
     std::unique_ptr<PText> txt(new PText);
+    txt->axesid = id;
+    txt->id = ++cnt;
     txt->text = text;
     txt->x = x;
     txt->y = y;
@@ -671,6 +723,8 @@ Axes & Axes::errorbar(const std::vector<float> &xdata, const std::vector<float> 
     }
 
     std::unique_ptr<PErrorbar> errbar(new PErrorbar);
+    errbar->axesid = id;
+    errbar->id = ++cnt;
     errbar->xdata = xdata;
     errbar->ydata = ydata;
     errbar->xerr = xerr;
@@ -726,6 +780,8 @@ Axes & Axes::errorbar(const std::vector<float> &xdata, const std::vector<float> 
     }
 
     std::unique_ptr<PErrorbar> errbar(new PErrorbar);
+    errbar->axesid = id;
+    errbar->id = ++cnt;
     errbar->xdata = xdata;
     errbar->ydata = ydata;
     if (!xerr.empty())
@@ -777,6 +833,8 @@ Axes & Axes::errorbar(const std::vector<float> &xdata, const std::vector<float> 
 Axes & Axes::hist(const std::vector<float> &data, int bins, const std::pair<float, float> &range, const std::map<std::string, std::string> &options)
 {
     std::unique_ptr<PHistogram> histo(new PHistogram);
+    histo->axesid = id;
+    histo->id = ++cnt;
     histo->data = data;
     histo->nbin = bins;
     histo->datmin = range.first;
@@ -820,6 +878,8 @@ Axes & Axes::step(const std::vector<float> &xdata, const std::vector<float> &yda
     }
 
     std::unique_ptr<PStep> step(new PStep);
+    step->axesid = id;
+    step->id = ++cnt;
     step->xdata = xdata;
     step->ydata = ydata;
 
@@ -974,6 +1034,127 @@ Axes & Axes::draw()
 
     return *this;
 }
+
+#ifdef HAVE_LIBCFITSIO
+Axes & Axes::writehdu(fitsfile *fptr)
+{
+    int status = 0;
+    /* write Axes hdu */
+    fits_movnam_hdu(fptr, BINARY_TBL, "AXES", 0, &status);
+
+    /* write data */
+    if (status == BAD_HDU_NUM)
+    {
+        status = 0;
+        char extname[] = "AXES";
+        char *ttype[] = {"ID", "CNT", "VIEW", "WIN", "FRAME", "LABEL", "DIRECT", "LABELROT", "TICKS", "GRID", "LOG", "AXIS", "AUTOSCL", "LIMITS", "XLABEL", "YLABEL", "TITLE", "FSLAB", "FSTKLAB"};
+        char *tform[] = {"1J", "1J", "4E", "4E", "4L", "4L", "1L", "1L", "2L", "2L", "2L", "1L", "2L", "2L", "128A", "128A", "128A", "128A", "128A"};
+        char *tunit[] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""};
+        fits_create_tbl(fptr, BINARY_TBL, 0, 19, ttype, tform, tunit, extname, &status);
+    }
+
+    long int nrows = 0;
+    fits_get_num_rows(fptr, &nrows, &status);
+
+    int colnum = 0;
+    float array_float[4];
+    int array_int[4];
+    char array_logical[4];
+    char array_char[128];
+
+    array_int[0] =id;
+    //ID
+    fits_write_col(fptr, TINT, ++colnum, nrows+1, 1, 1, array_int, &status);
+
+    array_int[0] = cnt;
+    //CNT
+    fits_write_col(fptr, TINT, ++colnum, nrows+1, 1, 1, array_int, &status);
+
+    array_float[0] = _left;
+    array_float[1] = _right;
+    array_float[2] = _bottom;
+    array_float[3] = _top;
+    //VIEW
+    fits_write_col(fptr, TFLOAT, ++colnum, nrows+1, 1, 4, array_float, &status);
+
+    array_float[0] = _xmin;
+    array_float[1] = _xmax;
+    array_float[2] = _ymin;
+    array_float[3] = _ymax;
+    //WIN
+    fits_write_col(fptr, TFLOAT, ++colnum, nrows+1, 1, 4, array_float, &status);
+
+    array_logical[0] = _frameleft;
+    array_logical[1] = _frameright;
+    array_logical[2] = _framebottom;
+    array_logical[3] = _frametop;
+    //FRAME
+    fits_write_col(fptr, TLOGICAL, ++colnum, nrows+1, 1, 4, array_logical, &status);
+
+    array_logical[0] = _labelleft;
+    array_logical[1] = _labelright;
+    array_logical[2] = _labelbottom;
+    array_logical[3] = _labeltop;
+    //LABEL
+    fits_write_col(fptr, TLOGICAL, ++colnum, nrows+1, 1, 4, array_logical, &status);
+
+    array_logical[0] = _directionout;
+    //DIRECT
+    fits_write_col(fptr, TLOGICAL, ++colnum, nrows+1, 1, 1, array_logical, &status);
+
+    array_logical[0] = _labelrotation;
+    //LABELROT
+    fits_write_col(fptr, TLOGICAL, ++colnum, nrows+1, 1, 1, array_logical, &status);
+
+    array_logical[0] = _minorticks;
+    array_logical[1] = _majorticks;
+    //TICKS
+    fits_write_col(fptr, TLOGICAL, ++colnum, nrows+1, 1, 2, array_logical, &status);
+
+    array_logical[0] = _gridvertical;
+    array_logical[1] = _gridhorizontal;
+    //GRID
+    fits_write_col(fptr, TLOGICAL, ++colnum, nrows+1, 1, 2, array_logical, &status);
+
+    array_logical[0] = _logx;
+    array_logical[1] = _logy;
+    //LOG
+    fits_write_col(fptr, TLOGICAL, ++colnum, nrows+1, 1, 2, array_logical, &status);
+
+    array_logical[0] = _axis;
+    //AXIS
+    fits_write_col(fptr, TLOGICAL, ++colnum, nrows+1, 1, 1, array_logical, &status);
+
+    array_logical[0] = _autoscalex;
+    array_logical[1] = _autoscaley;
+    //AUTOSCL
+    fits_write_col(fptr, TLOGICAL, ++colnum, nrows+1, 1, 2, array_logical, &status);
+
+    array_logical[0] = _xlimits;
+    array_logical[1] = _ylimits;
+    //LIMITS
+    fits_write_col(fptr, TLOGICAL, ++colnum, nrows+1, 1, 2, array_logical, &status);
+
+    //XLABEL
+    fits_write_col(fptr, TSTRING, ++colnum, nrows+1, 1, 1, &_xlabel, &status);
+
+    //YLABEL
+    fits_write_col(fptr, TSTRING, ++colnum, nrows+1, 1, 1, &_ylabel, &status);
+
+    //TITLE
+    fits_write_col(fptr, TSTRING, ++colnum, nrows+1, 1, 1, &_title, &status);
+
+    //FSLAB
+    fits_write_col(fptr, TSTRING, ++colnum, nrows+1, 1, 1, &_fontsize_label, &status);
+
+    //FSTKLAB
+    fits_write_col(fptr, TSTRING, ++colnum, nrows+1, 1, 1, &_fontsize_ticklabel, &status);
+
+    fits_report_error(stderr, status);
+
+    return *this;
+}
+#endif
 
 void Axes::get_opt(std::string &xopt, std::string &yopt)
 {
@@ -1155,6 +1336,44 @@ void PLine::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
     ymax = *(std::max_element(ydata.begin(), ydata.end()));
 }
 
+#ifdef HAVE_LIBCFITSIO
+PLine & PLine::writehdu(fitsfile *fptr)
+{
+    int status = 0;
+    /* write XYPlot hdu */
+
+    /* write data */
+    char extname[] = "LINE";
+    char *ttype[] = {"XDATA", "YDATA"};
+    char *tform[] = {"E", "E"};
+    char *tunit[] = {"", ""};
+    fits_create_tbl(fptr, BINARY_TBL, 1, 2, ttype, tform, tunit, extname, &status);
+
+    int colnum = 1;
+    fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+    fits_modify_vector_len(fptr, colnum, xdata.size(), &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, xdata.size(), xdata.data(), &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+    fits_modify_vector_len(fptr, colnum, ydata.size(), &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, ydata.size(), ydata.data(), &status);
+
+    /* write header */
+    char value[FLEN_VALUE] = "Line";
+    fits_update_key(fptr, TSTRING, "PLOTTYPE", value, "plot type", &status);
+    fits_update_key(fptr, TSTRING, "PLOTNAME", const_cast<char *>(plotname.c_str()), "plot name", &status);
+    fits_update_key(fptr, TINT, "AXES", &axesid, "axes id", &status);
+    fits_update_key(fptr, TINT, "ID", &id, "plot id", &status);
+    fits_update_key(fptr, TSTRING, "LINESTY", const_cast<char *>(linestyle.c_str()), "line style [-, --, ., -., -...]", &status);
+    fits_update_key(fptr, TSTRING, "LINEWID", const_cast<char *>(linewidth.c_str()), "linewidth", &status);
+    fits_update_key(fptr, TSTRING, "COLOR", const_cast<char *>(color.c_str()), "color", &status);
+
+	fits_report_error(stderr, status);
+
+    return *this;
+}
+#endif
+
 /*================== PAxvline =================*/
 PAxvline & PAxvline::draw(bool logx, bool logy)
 {
@@ -1218,6 +1437,41 @@ void PAxvline::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
 {
     xmin = x;
     xmax = x;
+}
+
+PAxvline & PAxvline::writehdu(fitsfile *fptr)
+{
+    int status = 0;
+    /* write XYPlot hdu */
+
+    /* write data */
+    char extname[] = "AXVLINE";
+    char *ttype[] = {"XDATA", "YDATA"};
+    char *tform[] = {"1E", "2E"};
+    char *tunit[] = {"", ""};
+    fits_create_tbl(fptr, BINARY_TBL, 1, 2, ttype, tform, tunit, extname, &status);
+
+    int colnum = 1;
+    fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, 1, &x, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+    float array_float[2] = {_ymin, _ymax};
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, 2, array_float, &status);
+
+    /* write header */
+    char value[FLEN_VALUE] = "Axvline";
+    fits_update_key(fptr, TSTRING, "PLOTTYPE", value, "plot type", &status);
+    fits_update_key(fptr, TSTRING, "PLOTNAME", const_cast<char *>(plotname.c_str()), "plot name", &status);
+    fits_update_key(fptr, TINT, "AXES", &axesid, "axes id", &status);
+    fits_update_key(fptr, TINT, "ID", &id, "plot id", &status);
+    fits_update_key(fptr, TSTRING, "LINESTY", const_cast<char *>(linestyle.c_str()), "line style [-, --, ., -., -...]", &status);
+    fits_update_key(fptr, TSTRING, "LINEWID", const_cast<char *>(linewidth.c_str()), "linewidth", &status);
+    fits_update_key(fptr, TSTRING, "COLOR", const_cast<char *>(color.c_str()), "color", &status);
+
+	fits_report_error(stderr, status);
+
+    return *this;
 }
 
 /*================== PAxhline =================*/
@@ -1285,6 +1539,43 @@ void PAxhline::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
     ymax = y;
 }
 
+#ifdef HAVE_LIBCFITSIO
+PAxhline & PAxhline::writehdu(fitsfile *fptr)
+{
+    int status = 0;
+    /* write XYPlot hdu */
+
+    /* write data */
+    char extname[] = "AXHLINE";
+    char *ttype[] = {"XDATA", "YDATA"};
+    char *tform[] = {"2E", "1E"};
+    char *tunit[] = {"", ""};
+    fits_create_tbl(fptr, BINARY_TBL, 1, 2, ttype, tform, tunit, extname, &status);
+
+    int colnum = 1;
+    fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+    float array_float[2] = {_xmin, _xmax};
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, 2, array_float, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, 1, &y, &status);
+
+    /* write header */
+    char value[FLEN_VALUE] = "Axhline";
+    fits_update_key(fptr, TSTRING, "PLOTTYPE", value, "plot type", &status);
+    fits_update_key(fptr, TSTRING, "PLOTNAME", const_cast<char *>(plotname.c_str()), "plot name", &status);
+    fits_update_key(fptr, TINT, "AXES", &axesid, "axes id", &status);
+    fits_update_key(fptr, TINT, "ID", &id, "plot id", &status);
+    fits_update_key(fptr, TSTRING, "LINESTY", const_cast<char *>(linestyle.c_str()), "line style [-, --, ., -., -...]", &status);
+    fits_update_key(fptr, TSTRING, "LINEWID", const_cast<char *>(linewidth.c_str()), "linewidth", &status);
+    fits_update_key(fptr, TSTRING, "COLOR", const_cast<char *>(color.c_str()), "color", &status);
+
+	fits_report_error(stderr, status);
+
+    return *this;
+}
+#endif
+
 /*================== PAxvspan =================*/
 PAxvspan & PAxvspan::draw(bool logx, bool logy)
 {
@@ -1344,6 +1635,46 @@ void PAxvspan::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
     xmin = _xmin;
     xmax = _xmax;
 }
+
+#ifdef HAVE_LIBCFITSIO
+PAxvspan & PAxvspan::writehdu(fitsfile *fptr)
+{
+    int status = 0;
+    /* write XYPlot hdu */
+
+    /* write data */
+    char extname[] = "AXVSPAN";
+    char *ttype[] = {"XDATA", "YDATA"};
+    char *tform[] = {"2E", "2E"};
+    char *tunit[] = {"", ""};
+    fits_create_tbl(fptr, BINARY_TBL, 1, 2, ttype, tform, tunit, extname, &status);
+
+    int colnum = 1;
+    fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+    float array_float[2] = {_xmin, _xmax};
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, 2, array_float, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+    array_float[0] = _ymin;
+    array_float[1] = _ymax;
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, 2, array_float, &status);
+
+    /* write header */
+    char value[FLEN_VALUE] = "Axvspan";
+    fits_update_key(fptr, TSTRING, "PLOTTYPE", value, "plot type", &status);
+    fits_update_key(fptr, TSTRING, "PLOTNAME", const_cast<char *>(plotname.c_str()), "plot name", &status);
+    fits_update_key(fptr, TINT, "AXES", &axesid, "axes id", &status);
+    fits_update_key(fptr, TINT, "ID", &id, "plot id", &status);
+    fits_update_key(fptr, TSTRING, "LINESTY", const_cast<char *>(linestyle.c_str()), "line style [-, --, ., -., -...]", &status);
+    fits_update_key(fptr, TSTRING, "LINEWID", const_cast<char *>(linewidth.c_str()), "linewidth", &status);
+    fits_update_key(fptr, TSTRING, "COLOR", const_cast<char *>(color.c_str()), "color", &status);
+    fits_update_key(fptr, TSTRING, "FILLED", const_cast<char *>(filled.c_str()), "filled [true, false]", &status);
+
+	fits_report_error(stderr, status);
+
+    return *this;
+}
+#endif
 
 /*================== PAxhspan =================*/
 PAxhspan & PAxhspan::draw(bool logx, bool logy)
@@ -1405,6 +1736,46 @@ void PAxhspan::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
     ymax = _ymax;
 }
 
+#ifdef HAVE_LIBCFITSIO
+PAxhspan & PAxhspan::writehdu(fitsfile *fptr)
+{
+    int status = 0;
+    /* write XYPlot hdu */
+
+    /* write data */
+    char extname[] = "AXHSPAN";
+    char *ttype[] = {"XDATA", "YDATA"};
+    char *tform[] = {"2E", "2E"};
+    char *tunit[] = {"", ""};
+    fits_create_tbl(fptr, BINARY_TBL, 1, 2, ttype, tform, tunit, extname, &status);
+
+    int colnum = 1;
+    fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+    float array_float[2] = {_xmin, _xmax};
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, 2, array_float, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+    array_float[0] = _ymin;
+    array_float[1] = _ymax;
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, 2, array_float, &status);
+
+    /* write header */
+    char value[FLEN_VALUE] = "Axhspan";
+    fits_update_key(fptr, TSTRING, "PLOTTYPE", value, "plot type", &status);
+    fits_update_key(fptr, TSTRING, "PLOTNAME", const_cast<char *>(plotname.c_str()), "plot name", &status);
+    fits_update_key(fptr, TINT, "AXES", &axesid, "axes id", &status);
+    fits_update_key(fptr, TINT, "ID", &id, "plot id", &status);
+    fits_update_key(fptr, TSTRING, "LINESTY", const_cast<char *>(linestyle.c_str()), "line style [-, --, ., -., -...]", &status);
+    fits_update_key(fptr, TSTRING, "LINEWID", const_cast<char *>(linewidth.c_str()), "linewidth", &status);
+    fits_update_key(fptr, TSTRING, "COLOR", const_cast<char *>(color.c_str()), "color", &status);
+    fits_update_key(fptr, TSTRING, "FILLED", const_cast<char *>(filled.c_str()), "filled [true, false]", &status);
+
+	fits_report_error(stderr, status);
+
+    return *this; 
+}
+#endif
+
 /*================== PScatter =================*/
 PScatter & PScatter::draw(bool logx, bool logy)
 {
@@ -1465,6 +1836,44 @@ void PScatter::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
     ymax = *(std::max_element(ydata.begin(), ydata.end()));
 }
 
+#ifdef HAVE_LIBCFITSIO
+PScatter & PScatter::writehdu(fitsfile *fptr)
+{
+    int status = 0;
+    /* write XYPlot hdu */
+
+    /* write data */
+    char extname[] = "SCATTER";
+    char *ttype[] = {"XDATA", "YDATA"};
+    char *tform[] = {"E", "E"};
+    char *tunit[] = {"", ""};
+    fits_create_tbl(fptr, BINARY_TBL, 1, 2, ttype, tform, tunit, extname, &status);
+
+    int colnum = 1;
+    fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+    fits_modify_vector_len(fptr, colnum, xdata.size(), &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, xdata.size(), xdata.data(), &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+    fits_modify_vector_len(fptr, colnum, ydata.size(), &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, ydata.size(), ydata.data(), &status);
+
+    /* write header */
+    char value[FLEN_VALUE] = "Scatter";
+    fits_update_key(fptr, TSTRING, "PLOTTYPE", value, "plot type", &status);
+    fits_update_key(fptr, TSTRING, "PLOTNAME", const_cast<char *>(plotname.c_str()), "plot name", &status);
+    fits_update_key(fptr, TINT, "AXES", &axesid, "axes id", &status);
+    fits_update_key(fptr, TINT, "ID", &id, "plot id", &status);
+    fits_update_key(fptr, TSTRING, "MARKER", const_cast<char *>(marker.c_str()), "marker type [0-31]", &status);
+    fits_update_key(fptr, TSTRING, "MKSIZE", const_cast<char *>(markersize.c_str()), "marker size", &status);
+    fits_update_key(fptr, TSTRING, "COLOR", const_cast<char *>(color.c_str()), "color", &status);
+
+	fits_report_error(stderr, status);
+
+    return *this;
+}
+#endif
+
 /*================== PPoint =================*/
 PPoint & PPoint::draw(bool logx, bool logy)
 {
@@ -1506,6 +1915,42 @@ void PPoint::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
     ymin = y;
     ymax = y;
 }
+
+#ifdef HAVE_LIBCFITSIO
+PPoint & PPoint::writehdu(fitsfile *fptr)
+{
+    int status = 0;
+    /* write XYPlot hdu */
+
+    /* write data */
+    char extname[] = "POINT";
+    char *ttype[] = {"XDATA", "YDATA"};
+    char *tform[] = {"1E", "1E"};
+    char *tunit[] = {"", ""};
+    fits_create_tbl(fptr, BINARY_TBL, 1, 2, ttype, tform, tunit, extname, &status);
+
+    int colnum = 1;
+    fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, 1, &x, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, 1, &y, &status);
+
+    /* write header */
+    char value[FLEN_VALUE] = "Point";
+    fits_update_key(fptr, TSTRING, "PLOTTYPE", value, "plot type", &status);
+    fits_update_key(fptr, TSTRING, "PLOTNAME", const_cast<char *>(plotname.c_str()), "plot name", &status);
+    fits_update_key(fptr, TINT, "AXES", &axesid, "axes id", &status);
+    fits_update_key(fptr, TINT, "ID", &id, "plot id", &status);
+    fits_update_key(fptr, TSTRING, "MARKER", const_cast<char *>(marker.c_str()), "marker type [0-31]", &status);
+    fits_update_key(fptr, TSTRING, "MKSIZE", const_cast<char *>(markersize.c_str()), "marker size", &status);
+    fits_update_key(fptr, TSTRING, "COLOR", const_cast<char *>(color.c_str()), "color", &status);
+
+	fits_report_error(stderr, status);
+
+    return *this;
+}
+#endif
 
 /*================== PPoint =================*/
 PPcolor & PPcolor::draw(bool logx, bool logy)
@@ -1553,6 +1998,46 @@ void PPcolor::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
     ymin = *(std::min_element(ydata.begin(), ydata.end()));
     ymax = *(std::max_element(ydata.begin(), ydata.end()));
 }
+
+#ifdef HAVE_LIBCFITSIO
+PPcolor & PPcolor::writehdu(fitsfile *fptr)
+{
+    int status = 0;
+    /* write XYPlot hdu */
+
+    /* write data */
+    char extname[] = "PCOLOR";
+    char *ttype[] = {"XDATA", "YDATA", "ZDATA"};
+    char *tform[] = {"E", "E", "E"};
+    char *tunit[] = {"", "", ""};
+    fits_create_tbl(fptr, BINARY_TBL, 1, 3, ttype, tform, tunit, extname, &status);
+
+    int colnum = 1;
+    fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+    fits_modify_vector_len(fptr, colnum, xdata.size(), &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, xdata.size(), xdata.data(), &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+    fits_modify_vector_len(fptr, colnum, ydata.size(), &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, ydata.size(), ydata.data(), &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "ZDATA", &colnum, &status);
+    fits_modify_vector_len(fptr, colnum, zdata.size(), &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, zdata.size(), zdata.data(), &status);
+
+    /* write header */
+    char value[FLEN_VALUE] = "Pcolor";
+    fits_update_key(fptr, TSTRING, "PLOTTYPE", value, "plot type", &status);
+    fits_update_key(fptr, TSTRING, "PLOTNAME", const_cast<char *>(plotname.c_str()), "plot name", &status);
+    fits_update_key(fptr, TINT, "AXES", &axesid, "axes id", &status);
+    fits_update_key(fptr, TINT, "ID", &id, "plot id", &status);
+    fits_update_key(fptr, TSTRING, "CMAP", const_cast<char *>(cmap.c_str()), "color", &status);
+
+	fits_report_error(stderr, status);
+
+    return *this;    
+}
+#endif
 
 /*================== PErrorbar =================*/
 PErrorbar & PErrorbar::draw(bool logx, bool logy)
@@ -1681,6 +2166,70 @@ void PErrorbar::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
     ymax = *(std::max_element(yh.begin(), yh.end()));
 }
 
+#ifdef HAVE_LIBCFITSIO
+PErrorbar & PErrorbar::writehdu(fitsfile *fptr)
+{
+    int status = 0;
+    /* write XYPlot hdu */
+
+    /* write data */
+    char extname[] = "ERRORBAR";
+    char *ttype[] = {"XDATA", "YDATA", "XERRL", "XERRU", "YERRL", "YERRU"};
+    char *tform[] = {"E", "E", "0E", "0E", "0E", "0E"};
+    char *tunit[] = {"", "", "", "", "", ""};
+    fits_create_tbl(fptr, BINARY_TBL, 1, 6, ttype, tform, tunit, extname, &status);
+
+    int colnum = 1;
+    fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+    fits_modify_vector_len(fptr, colnum, xdata.size(), &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, xdata.size(), xdata.data(), &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+    fits_modify_vector_len(fptr, colnum, ydata.size(), &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, ydata.size(), ydata.data(), &status);
+
+    if (!xerr.empty())
+    {
+        fits_get_colnum(fptr, CASEINSEN, "XERRL", &colnum, &status);
+        fits_modify_vector_len(fptr, colnum, xerr.front().size(), &status);
+        fits_write_col(fptr, TFLOAT, colnum, 1, 1, xerr.front().size(), xerr.front().data(), &status);
+
+        fits_get_colnum(fptr, CASEINSEN, "XERRU", &colnum, &status);
+        fits_modify_vector_len(fptr, colnum, xerr.back().size(), &status);
+        fits_write_col(fptr, TFLOAT, colnum, 1, 1, xerr.back().size(), xerr.back().data(), &status);
+    }
+
+    if (!yerr.empty())
+    {
+        fits_get_colnum(fptr, CASEINSEN, "YERRL", &colnum, &status);
+        fits_modify_vector_len(fptr, colnum, yerr.front().size(), &status);
+        fits_write_col(fptr, TFLOAT, colnum, 1, 1, yerr.front().size(), yerr.front().data(), &status);
+
+        fits_get_colnum(fptr, CASEINSEN, "YERRU", &colnum, &status);
+        fits_modify_vector_len(fptr, colnum, yerr.back().size(), &status);
+        fits_write_col(fptr, TFLOAT, colnum, 1, 1, yerr.back().size(), yerr.back().data(), &status);
+    }
+
+    /* write header */
+    char value[FLEN_VALUE] = "Errorbar";
+    fits_update_key(fptr, TSTRING, "PLOTTYPE", value, "plot type", &status);
+    fits_update_key(fptr, TSTRING, "PLOTNAME", const_cast<char *>(plotname.c_str()), "plot name", &status);
+    fits_update_key(fptr, TINT, "AXES", &axesid, "axes id", &status);
+    fits_update_key(fptr, TINT, "ID", &id, "plot id", &status);
+    fits_update_key(fptr, TSTRING, "LINEWID", const_cast<char *>(linewidth.c_str()), "linewidth", &status);
+    fits_update_key(fptr, TSTRING, "COLOR", const_cast<char *>(color.c_str()), "color", &status);
+    fits_update_key(fptr, TSTRING, "CAPSIZE", const_cast<char *>(capsize.c_str()), "cap size", &status);
+    fits_update_key(fptr, TSTRING, "UPLIMS", const_cast<char *>(uplims.c_str()), "y up limits [true, false]", &status);
+    fits_update_key(fptr, TSTRING, "LOLIMS", const_cast<char *>(lolims.c_str()), "y low limits [true, false]", &status);
+    fits_update_key(fptr, TSTRING, "XUPLIMS", const_cast<char *>(xuplims.c_str()), "x up limits [true, false]", &status);
+    fits_update_key(fptr, TSTRING, "XLOLIMS", const_cast<char *>(xlolims.c_str()), "x low limits [true, false]", &status);
+
+	fits_report_error(stderr, status);
+
+    return *this;    
+}
+#endif
+
 /*================== PText =================*/
 PText & PText::draw(bool logx, bool logy)
 {
@@ -1792,6 +2341,67 @@ PText * PText::clone()
     return txt;
 }
 
+#ifdef HAVE_LIBCFITSIO
+PText & PText::writehdu(fitsfile *fptr)
+{
+    int status = 0;
+    /* write Meta hdu */
+    fits_movnam_hdu(fptr, BINARY_TBL, "META", 0, &status);
+
+    /* write data */
+    if (status == BAD_HDU_NUM)
+    {
+        status = 0;
+        char extname[] = "META";
+        char *ttype[] = {"AXES", "ID", "X", "Y", "TEXT", "FONTSIZE", "XYCOORDS", "COLOR", "ROTAT", "REFPOS"};
+        char *tform[] = {"1J", "1J", "1E", "1E", "128A", "128A", "128A", "128A", "128A", "128A"};
+        char *tunit[] = {"", "", "", "", "", "", "", "", "", ""};
+        fits_create_tbl(fptr, BINARY_TBL, 0, 10, ttype, tform, tunit, extname, &status);
+
+        char value[FLEN_VALUE] = "Meta";
+        fits_update_key(fptr, TSTRING, "PLOTTYPE", value, "plot type", &status);
+    }
+
+    long int nrows = 0;
+    fits_get_num_rows(fptr, &nrows, &status);
+
+    int colnum = 1;
+    fits_get_colnum(fptr, CASEINSEN, "AXES", &colnum, &status);
+    fits_write_col(fptr, TINT, colnum, nrows+1, 1, 1, &axesid, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "ID", &colnum, &status);
+    fits_write_col(fptr, TINT, colnum, nrows+1, 1, 1, &id, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "X", &colnum, &status);
+    fits_write_col(fptr, TFLOAT, colnum, nrows+1, 1, 1, &x, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "Y", &colnum, &status);
+    fits_write_col(fptr, TFLOAT, colnum, nrows+1, 1, 1, &y, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "TEXT", &colnum, &status);
+    fits_write_col(fptr, TSTRING, colnum, nrows+1, 1, 1, &text, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "FONTSIZE", &colnum, &status);
+    fits_write_col(fptr, TSTRING, colnum, nrows+1, 1, 1, &fontsize, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "XYCOORDS", &colnum, &status);
+    fits_write_col(fptr, TSTRING, colnum, nrows+1, 1, 1, &xycoords, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "COLOR", &colnum, &status);
+    fits_write_col(fptr, TSTRING, colnum, nrows+1, 1, 1, &color, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "ROTAT", &colnum, &status);
+    fits_write_col(fptr, TSTRING, colnum, nrows+1, 1, 1, &rotation, &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "REFPOS", &colnum, &status);
+    fits_write_col(fptr, TSTRING, colnum, nrows+1, 1, 1, &refpos, &status);
+
+	fits_report_error(stderr, status);
+
+    return *this;
+}
+#endif
+
 /*================== PHistogram =================*/
 PHistogram & PHistogram::draw(bool logx, bool logy)
 {
@@ -1853,6 +2463,44 @@ void PHistogram::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
     ymax *= 1.1;
 }
 
+#ifdef HAVE_LIBCFITSIO
+PHistogram & PHistogram::writehdu(fitsfile *fptr)
+{
+    int status = 0;
+    /* write XYPlot hdu */
+
+    /* write data */
+    char extname[] = "HISTOGRAM";
+    char *ttype[] = {"DATA"};
+    char *tform[] = {"E"};
+    char *tunit[] = {""};
+    fits_create_tbl(fptr, BINARY_TBL, 1, 1, ttype, tform, tunit, extname, &status);
+
+    int colnum = 1;
+    fits_get_colnum(fptr, CASEINSEN, "DATA", &colnum, &status);
+    fits_modify_vector_len(fptr, colnum, data.size(), &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, data.size(), data.data(), &status);
+
+    /* write header */
+    char value[FLEN_VALUE] = "Histogram";
+    fits_update_key(fptr, TSTRING, "PLOTTYPE", value, "plot type", &status);
+    fits_update_key(fptr, TSTRING, "PLOTNAME", const_cast<char *>(plotname.c_str()), "plot name", &status);
+    fits_update_key(fptr, TINT, "AXES", &axesid, "axes id", &status);
+    fits_update_key(fptr, TINT, "ID", &id, "plot id", &status);
+    fits_update_key(fptr, TSTRING, "LINESTY", const_cast<char *>(linestyle.c_str()), "line style [-, --, ., -., -...]", &status);
+    fits_update_key(fptr, TSTRING, "LINEWID", const_cast<char *>(linewidth.c_str()), "linewidth", &status);
+    fits_update_key(fptr, TSTRING, "COLOR", const_cast<char *>(color.c_str()), "color", &status);
+    fits_update_key(fptr, TSTRING, "HISTTYPE", const_cast<char *>(histtype.c_str()), "histogram tyle [bar,barfilled,step]", &status);
+    fits_update_key(fptr, TFLOAT, "DATMIN", &datmin, "data minimum", &status);
+    fits_update_key(fptr, TFLOAT, "DATMAX", &datmax, "data maximum", &status);
+    fits_update_key(fptr, TINT, "NBIN", &nbin, "histogram nbin", &status);
+
+	fits_report_error(stderr, status);
+
+    return *this;    
+}
+#endif
+
 /*================== PStep =================*/
 PStep & PStep::draw(bool logx, bool logy)
 {
@@ -1897,9 +2545,50 @@ void PStep::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
     ymax = *(std::max_element(ydata.begin(), ydata.end()));
 }
 
+#ifdef HAVE_LIBCFITSIO
+PStep & PStep::writehdu(fitsfile *fptr)
+{
+    int status = 0;
+    /* write XYPlot hdu */
+
+    /* write data */
+    char extname[] = "STEP";
+    char *ttype[] = {"XDATA", "YDATA"};
+    char *tform[] = {"E", "E"};
+    char *tunit[] = {"", ""};
+    fits_create_tbl(fptr, BINARY_TBL, 1, 2, ttype, tform, tunit, extname, &status);
+
+    int colnum = 1;
+    fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+    fits_modify_vector_len(fptr, colnum, xdata.size(), &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, xdata.size(), xdata.data(), &status);
+
+    fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+    fits_modify_vector_len(fptr, colnum, ydata.size(), &status);
+    fits_write_col(fptr, TFLOAT, colnum, 1, 1, ydata.size(), ydata.data(), &status);
+
+    /* write header */
+    char value[FLEN_VALUE] = "Step";
+    fits_update_key(fptr, TSTRING, "PLOTTYPE", value, "plot type", &status);
+    fits_update_key(fptr, TSTRING, "PLOTNAME", const_cast<char *>(plotname.c_str()), "plot name", &status);
+    fits_update_key(fptr, TINT, "AXES", &axesid, "axes id", &status);
+    fits_update_key(fptr, TINT, "ID", &id, "plot id", &status);
+    fits_update_key(fptr, TSTRING, "LINESTY", const_cast<char *>(linestyle.c_str()), "line style [-, --, ., -., -...]", &status);
+    fits_update_key(fptr, TSTRING, "LINEWID", const_cast<char *>(linewidth.c_str()), "linewidth", &status);
+    fits_update_key(fptr, TSTRING, "COLOR", const_cast<char *>(color.c_str()), "color", &status);
+    fits_update_key(fptr, TSTRING, "WHERE", const_cast<char *>(where.c_str()), "step start position [mid,]", &status);
+
+	fits_report_error(stderr, status);
+
+    return *this;
+}
+#endif
+
 /*================== Figure =================*/
 Figure::Figure()
 {
+    cnt = 0;
+
     _width = 0.;
     _aspect = 0.;
 
@@ -1909,6 +2598,8 @@ Figure::Figure()
 
 Figure::Figure(float width, float aspect)
 {
+    cnt = 0;
+
     _width = width;
     _aspect = aspect;
 
@@ -1920,6 +2611,13 @@ Figure::~Figure(){}
 
 Figure & Figure::push(Axes &ax)
 {
+    ax.id = ++cnt;
+
+    for (auto p=ax.plots.begin(); p!=ax.plots.end(); ++p)
+    {
+        (*p)->axesid = ax.id;
+    }
+
     ax.get_win();
 
     axes.push_back(ax);
@@ -1976,6 +2674,784 @@ Figure & Figure::save(const std::string &fname)
     cpgclos();
 
     return *this;
+}
+
+Figure & Figure::savepx(const std::string &fname)
+{
+#ifdef HAVE_LIBCFITSIO
+    int status = 0;
+
+    fitsfile *fptr = NULL;
+    fits_create_file(&fptr, fname.c_str(), &status);
+
+    /* write primary hdu*/
+    long int naxes[2] = {0, 0};
+    fits_create_img(fptr, 32, 2, naxes, &status); 
+    fits_update_key(fptr, TSTRING, "FIGNAME", const_cast<char *>(_figname.c_str()), "figure name", &status);
+    fits_update_key(fptr, TFLOAT, "WIDTH", &_width, "figure width", &status);
+    fits_update_key(fptr, TFLOAT, "ASPECT", &_aspect, "figure aspect ratio height/width", &status);
+    fits_update_key(fptr, TSTRING, "BCKCOLOR", const_cast<char *>(_background_color.c_str()), "background color", &status);
+    fits_update_key(fptr, TSTRING, "DFTCOLOR", const_cast<char *>(_default_color.c_str()), "default color", &status);
+    fits_update_key(fptr, TINT, "CNT", &cnt, "number of axes", &status);
+    int score = 0;
+    fits_update_key(fptr, TINT, "SCORE", &score, "score", &status);
+
+    /* write axes hdu */
+    for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+    {
+        ax->writehdu(fptr);
+    }
+    
+    /* write plot hdu */
+    for (long int k=0; k<axes.size(); k++)
+    {
+        for (auto p=axes[k].plots.begin(); p!=axes[k].plots.end(); ++p)
+        {
+            (*p)->writehdu(fptr);
+        }
+    }
+
+    fits_close_file(fptr, &status);
+
+    fits_report_error(stderr, status);
+
+    return *this;
+#else
+    std::cerr<<"Warning: cfitsio not found, can not save to px file"<<std::endl;
+    return *this;
+#endif
+}
+
+Figure & Figure::loadpx(const std::string &fname)
+{
+#ifdef HAVE_LIBCFITSIO
+    int status = 0;
+
+    fitsfile *fptr = NULL;
+    fits_open_file(&fptr, fname.c_str(), 0, &status);
+
+    int hdunum = 0;
+    fits_get_num_hdus(fptr, &hdunum, &status);
+
+    /* read primary hdu to figure*/
+    fits_movabs_hdu(fptr, 1, NULL, &status);
+
+    fits_read_key(fptr, TFLOAT, "WIDTH", &_width, NULL, &status);
+    fits_read_key(fptr, TFLOAT, "ASPECT", &_aspect, NULL, &status);
+    char value[FLEN_VALUE];
+    fits_read_key(fptr, TSTRING, "BCKCOLOR", value, NULL, &status);
+    _background_color = value;
+    fits_read_key(fptr, TSTRING, "DFTCOLOR", value, NULL, &status);
+    _default_color = value;
+    fits_read_key(fptr, TINT, "CNT", &cnt, NULL, &status);
+
+    /* read axes hdu to axes */
+    fits_movabs_hdu(fptr, 2, NULL, &status);
+
+    long int nrows = 0;
+	fits_get_num_rows(fptr, &nrows, &status);
+
+    Axes ax;
+    for (long int k=0; k<nrows; k++)
+    {
+        float array_float[] = {0., 0., 0., 0.};
+        int array_int[] = {0, 0, 0, 0};
+        char array_logical[] = {0, 0, 0, 0};
+        int colnum = 0;
+
+        fits_get_colnum(fptr, CASEINSEN, "ID", &colnum, &status);
+        fits_read_col(fptr, TINT, colnum, k+1, 1, 1, NULL, &ax.id, 0, &status);
+
+        fits_get_colnum(fptr, CASEINSEN, "CNT", &colnum, &status);
+        fits_read_col(fptr, TINT, colnum, k+1, 1, 1, NULL, &ax.cnt, 0, &status);
+
+        fits_get_colnum(fptr, CASEINSEN, "VIEW", &colnum, &status);
+        fits_read_col(fptr, TFLOAT, colnum, k+1, 1, 4, NULL, array_float, 0, &status);
+        ax._left = array_float[0];
+        ax._right = array_float[1];
+        ax._bottom = array_float[2];
+        ax._top = array_float[3];
+
+        fits_get_colnum(fptr, CASEINSEN, "WIN", &colnum, &status);
+        fits_read_col(fptr, TFLOAT, colnum, k+1, 1, 4, NULL, array_float, 0, &status);
+        ax._xmin = array_float[0];
+        ax._xmax = array_float[1];
+        ax._ymin = array_float[2];
+        ax._ymax = array_float[3];
+
+        fits_get_colnum(fptr, CASEINSEN, "FRAME", &colnum, &status);
+        fits_read_col(fptr, TLOGICAL, colnum, k+1, 1, 4, NULL, array_logical, 0, &status);
+        ax._frameleft = array_logical[0];
+        ax._frameright = array_logical[1];
+        ax._framebottom = array_logical[2];
+        ax._frametop = array_logical[3];
+
+        fits_get_colnum(fptr, CASEINSEN, "LABEL", &colnum, &status);
+        fits_read_col(fptr, TLOGICAL, colnum, k+1, 1, 4, NULL, array_logical, 0, &status);
+        ax._labelleft = array_logical[0];
+        ax._labelright = array_logical[1];
+        ax._labelbottom = array_logical[2];
+        ax._labeltop = array_logical[3];
+
+        fits_get_colnum(fptr, CASEINSEN, "DIRECT", &colnum, &status);
+        fits_read_col(fptr, TLOGICAL, colnum, k+1, 1, 1, NULL, array_logical, 0, &status);
+        ax._directionout = array_logical[0];
+
+        fits_get_colnum(fptr, CASEINSEN, "LABELROT", &colnum, &status);
+        fits_read_col(fptr, TLOGICAL, colnum, k+1, 1, 1, NULL, array_logical, 0, &status);
+        ax._labelrotation = array_logical[0];
+    
+        fits_get_colnum(fptr, CASEINSEN, "TICKS", &colnum, &status);
+        fits_read_col(fptr, TLOGICAL, colnum, k+1, 1, 2, NULL, array_logical, 0, &status);
+        ax._minorticks = array_logical[0];
+        ax._majorticks = array_logical[1];
+
+        fits_get_colnum(fptr, CASEINSEN, "GRID", &colnum, &status);
+        fits_read_col(fptr, TLOGICAL, colnum, k+1, 1, 2, NULL, array_logical, 0, &status);
+        ax._gridvertical = array_logical[0];
+        ax._gridhorizontal = array_logical[1];
+
+        fits_get_colnum(fptr, CASEINSEN, "LOG", &colnum, &status);
+        fits_read_col(fptr, TLOGICAL, colnum, k+1, 1, 2, NULL, array_logical, 0, &status);
+        ax._logx = array_logical[0];
+        ax._logy = array_logical[1];
+
+        fits_get_colnum(fptr, CASEINSEN, "AXIS", &colnum, &status);
+        fits_read_col(fptr, TLOGICAL, colnum, k+1, 1, 1, NULL, array_logical, 0, &status);
+        ax._axis = array_logical[0];
+
+        fits_get_colnum(fptr, CASEINSEN, "AUTOSCL", &colnum, &status);
+        fits_read_col(fptr, TLOGICAL, colnum, k+1, 1, 2, NULL, array_logical, 0, &status);
+        ax._autoscalex = array_logical[0];
+        ax._autoscaley = array_logical[1];
+
+        fits_get_colnum(fptr, CASEINSEN, "LIMITS", &colnum, &status);
+        fits_read_col(fptr, TLOGICAL, colnum, k+1, 1, 2, NULL, array_logical, 0, &status);
+        ax._xlimits = array_logical[0];
+        ax._ylimits = array_logical[1];
+
+        int typecode;
+	    long int repeat = 0;
+	    long int width = 0;
+        fits_get_colnum(fptr, CASEINSEN, "XLABEL", &colnum, &status);
+	    fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+        char *text = new char [repeat+1];
+		fits_read_col(fptr, TSTRING, colnum, k+1, 1, 1, NULL, &text, 0, &status);
+        ax._xlabel = text;
+	    delete [] text;
+        text = NULL;
+
+	    repeat = 0;
+	    width = 0;
+        fits_get_colnum(fptr, CASEINSEN, "YLABEL", &colnum, &status);
+	    fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+        text = new char [repeat+1];
+		fits_read_col(fptr, TSTRING, colnum, k+1, 1, 1, NULL, &text, 0, &status);
+        ax._ylabel = text;
+	    delete [] text;
+        text = NULL;
+
+        repeat = 0;
+	    width = 0;
+        fits_get_colnum(fptr, CASEINSEN, "TITLE", &colnum, &status);
+	    fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+        text = new char [repeat+1];
+		fits_read_col(fptr, TSTRING, colnum, k+1, 1, 1, NULL, &text, 0, &status);
+        ax._title = text;
+	    delete [] text;
+        text = NULL;
+
+        repeat = 0;
+	    width = 0;
+        fits_get_colnum(fptr, CASEINSEN, "FSLAB", &colnum, &status);
+	    fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+        text = new char [repeat+1];
+		fits_read_col(fptr, TSTRING, colnum, k+1, 1, 1, NULL, &text, 0, &status);
+        ax._fontsize_label = text;
+	    delete [] text;
+        text = NULL;
+
+        repeat = 0;
+	    width = 0;
+        fits_get_colnum(fptr, CASEINSEN, "FSTKLAB", &colnum, &status);
+	    fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+        text = new char [repeat+1];
+		fits_read_col(fptr, TSTRING, colnum, k+1, 1, 1, NULL, &text, 0, &status);
+        ax._fontsize_ticklabel = text;
+	    delete [] text;
+        text = NULL;
+
+        axes.push_back(ax);
+    }
+
+    /* read plot hdu to plots */
+    for (long int i=3; i<=hdunum; i++)
+    {
+        fits_movabs_hdu(fptr, i, NULL, &status);
+
+        fits_read_key(fptr, TSTRING, "PLOTTYPE", value, NULL, &status);
+        if (strcmp(value, "Line") == 0)
+        {
+            std::unique_ptr<PLine> line(new PLine);
+
+            fits_read_key(fptr, TINT, "AXES", &(line->axesid), NULL, &status);
+            fits_read_key(fptr, TINT, "ID", &(line->id), NULL, &status);
+            fits_read_key(fptr, TSTRING, "LINESTY", value, NULL, &status);
+            line->linestyle = value;
+            fits_read_key(fptr, TSTRING, "LINEWID", value, NULL, &status);
+            line->linewidth = value;
+            fits_read_key(fptr, TSTRING, "COLOR", value, NULL, &status);
+            line->color = value;
+
+            int colnum = 0;
+            int typecode;
+	        long int repeat = 0;
+	        long int width = 0;
+            fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            line->xdata.resize(repeat);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, line->xdata.data(), NULL, &status);
+
+            fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            line->ydata.resize(repeat);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, line->ydata.data(), NULL, &status);
+
+            for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+            {
+                if (ax->id == line->axesid)
+                {
+                    ax->plots.push_back(std::move(line));
+                    break;
+                }
+            }
+        }
+        else if (strcmp(value, "Axvline") == 0)
+        {
+            std::unique_ptr<PAxvline> line(new PAxvline);
+
+            fits_read_key(fptr, TINT, "AXES", &(line->axesid), NULL, &status);
+            fits_read_key(fptr, TINT, "ID", &(line->id), NULL, &status);
+            fits_read_key(fptr, TSTRING, "LINESTY", value, NULL, &status);
+            line->linestyle = value;
+            fits_read_key(fptr, TSTRING, "LINEWID", value, NULL, &status);
+            line->linewidth = value;
+            fits_read_key(fptr, TSTRING, "COLOR", value, NULL, &status);
+            line->color = value;
+
+            int colnum = 0;
+            fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, 1, NULL, &(line->x), NULL, &status);
+
+            fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+            float array_float[2];
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, 2, NULL, array_float, NULL, &status);
+            line->_ymin = array_float[0];
+            line->_ymax = array_float[1];
+
+            for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+            {
+                if (ax->id == line->axesid)
+                {
+                    ax->plots.push_back(std::move(line));
+                    break;
+                }
+            }
+        }
+        else if (strcmp(value, "Axhline") == 0)
+        {
+            std::unique_ptr<PAxhline> line(new PAxhline);
+
+            fits_read_key(fptr, TINT, "AXES", &(line->axesid), NULL, &status);
+            fits_read_key(fptr, TINT, "ID", &(line->id), NULL, &status);
+            fits_read_key(fptr, TSTRING, "LINESTY", value, NULL, &status);
+            line->linestyle = value;
+            fits_read_key(fptr, TSTRING, "LINEWID", value, NULL, &status);
+            line->linewidth = value;
+            fits_read_key(fptr, TSTRING, "COLOR", value, NULL, &status);
+            line->color = value;
+
+            int colnum = 0;
+            fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+            float array_float[2];
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, 2, NULL, array_float, NULL, &status);
+            line->_xmin = array_float[0];
+            line->_xmax = array_float[1];
+
+            fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, 1, NULL, &(line->y), NULL, &status);
+
+            for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+            {
+                if (ax->id == line->axesid)
+                {
+                    ax->plots.push_back(std::move(line));
+                    break;
+                }
+            }
+        }
+        else if (strcmp(value, "Axvline") == 0)
+        {
+            std::unique_ptr<PAxvline> line(new PAxvline);
+
+            fits_read_key(fptr, TINT, "AXES", &(line->axesid), NULL, &status);
+            fits_read_key(fptr, TINT, "ID", &(line->id), NULL, &status);
+            fits_read_key(fptr, TSTRING, "LINESTY", value, NULL, &status);
+            line->linestyle = value;
+            fits_read_key(fptr, TSTRING, "LINEWID", value, NULL, &status);
+            line->linewidth = value;
+            fits_read_key(fptr, TSTRING, "COLOR", value, NULL, &status);
+            line->color = value;
+
+            int colnum = 0;
+            fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, 1, NULL, &(line->x), NULL, &status);
+
+            fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+            float array_float[2];
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, 2, NULL, array_float, NULL, &status);
+            line->_ymin = array_float[0];
+            line->_ymax = array_float[1];
+
+            for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+            {
+                if (ax->id == line->axesid)
+                {
+                    ax->plots.push_back(std::move(line));
+                    break;
+                }
+            }
+        }
+        else if (strcmp(value, "Axvspan") == 0)
+        {
+            std::unique_ptr<PAxvspan> span(new PAxvspan);
+
+            fits_read_key(fptr, TINT, "AXES", &(span->axesid), NULL, &status);
+            fits_read_key(fptr, TINT, "ID", &(span->id), NULL, &status);
+            fits_read_key(fptr, TSTRING, "LINESTY", value, NULL, &status);
+            span->linestyle = value;
+            fits_read_key(fptr, TSTRING, "LINEWID", value, NULL, &status);
+            span->linewidth = value;
+            fits_read_key(fptr, TSTRING, "COLOR", value, NULL, &status);
+            span->color = value;
+            fits_read_key(fptr, TSTRING, "FILLED", value, NULL, &status);
+            span->filled = value;
+
+            int colnum = 0;
+            fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+            float array_float[2];
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, 2, NULL, array_float, NULL, &status);
+            span->_xmin = array_float[0];
+            span->_xmax = array_float[1];
+
+            fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, 2, NULL, array_float, NULL, &status);
+            span->_ymin = array_float[0];
+            span->_ymax = array_float[1];
+
+            for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+            {
+                if (ax->id == span->axesid)
+                {
+                    ax->plots.push_back(std::move(span));
+                    break;
+                }
+            }
+        }
+        else if (strcmp(value, "Axhspan") == 0)
+        {
+            std::unique_ptr<PAxhspan> span(new PAxhspan);
+
+            fits_read_key(fptr, TINT, "AXES", &(span->axesid), NULL, &status);
+            fits_read_key(fptr, TINT, "ID", &(span->id), NULL, &status);
+            fits_read_key(fptr, TSTRING, "LINESTY", value, NULL, &status);
+            span->linestyle = value;
+            fits_read_key(fptr, TSTRING, "LINEWID", value, NULL, &status);
+            span->linewidth = value;
+            fits_read_key(fptr, TSTRING, "COLOR", value, NULL, &status);
+            span->color = value;
+            fits_read_key(fptr, TSTRING, "FILLED", value, NULL, &status);
+            span->filled = value;
+
+            int colnum = 0;
+            fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+            float array_float[2];
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, 2, NULL, array_float, NULL, &status);
+            span->_xmin = array_float[0];
+            span->_xmax = array_float[1];
+
+            fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, 2, NULL, array_float, NULL, &status);
+            span->_ymin = array_float[0];
+            span->_ymax = array_float[1];
+
+            for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+            {
+                if (ax->id == span->axesid)
+                {
+                    ax->plots.push_back(std::move(span));
+                    break;
+                }
+            }
+        }
+        else if (strcmp(value, "Scatter") == 0)
+        {
+            std::unique_ptr<PScatter> line(new PScatter);
+
+            fits_read_key(fptr, TINT, "AXES", &(line->axesid), NULL, &status);
+            fits_read_key(fptr, TINT, "ID", &(line->id), NULL, &status);
+            fits_read_key(fptr, TSTRING, "MARKER", value, NULL, &status);
+            line->marker = value;
+            fits_read_key(fptr, TSTRING, "MKSIZE", value, NULL, &status);
+            line->markersize = value;
+            fits_read_key(fptr, TSTRING, "COLOR", value, NULL, &status);
+            line->color = value;
+
+            int colnum = 0;
+            int typecode;
+	        long int repeat = 0;
+	        long int width = 0;
+            fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            line->xdata.resize(repeat);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, line->xdata.data(), NULL, &status);
+
+            fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            line->ydata.resize(repeat);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, line->ydata.data(), NULL, &status);
+
+            for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+            {
+                if (ax->id == line->axesid)
+                {
+                    ax->plots.push_back(std::move(line));
+                    break;
+                }
+            }
+        }
+        else if (strcmp(value, "Point") == 0)
+        {
+            std::unique_ptr<PPoint> line(new PPoint);
+
+            fits_read_key(fptr, TINT, "AXES", &(line->axesid), NULL, &status);
+            fits_read_key(fptr, TINT, "ID", &(line->id), NULL, &status);
+            fits_read_key(fptr, TSTRING, "MARKER", value, NULL, &status);
+            line->marker = value;
+            fits_read_key(fptr, TSTRING, "MKSIZE", value, NULL, &status);
+            line->markersize = value;
+            fits_read_key(fptr, TSTRING, "COLOR", value, NULL, &status);
+            line->color = value;
+
+            int colnum = 0;
+            fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, 1, NULL, &(line->x), NULL, &status);
+
+            fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, 1, NULL, &(line->y), NULL, &status);
+
+            for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+            {
+                if (ax->id == line->axesid)
+                {
+                    ax->plots.push_back(std::move(line));
+                    break;
+                }
+            }
+        }
+        else if (strcmp(value, "Errorbar") == 0)
+        {
+            std::unique_ptr<PErrorbar> line(new PErrorbar);
+
+            fits_read_key(fptr, TINT, "AXES", &(line->axesid), NULL, &status);
+            fits_read_key(fptr, TINT, "ID", &(line->id), NULL, &status);
+            fits_read_key(fptr, TSTRING, "CAPSIZE", value, NULL, &status);
+            line->capsize = value;
+            fits_read_key(fptr, TSTRING, "LINEWID", value, NULL, &status);
+            line->linewidth = value;
+            fits_read_key(fptr, TSTRING, "COLOR", value, NULL, &status);
+            line->color = value;
+            fits_read_key(fptr, TSTRING, "UPLIMS", value, NULL, &status);
+            line->uplims = value;
+            fits_read_key(fptr, TSTRING, "LOLIMS", value, NULL, &status);
+            line->lolims = value;
+            fits_read_key(fptr, TSTRING, "XUPLIMS", value, NULL, &status);
+            line->xuplims = value;
+            fits_read_key(fptr, TSTRING, "XLOLIMS", value, NULL, &status);
+            line->xlolims = value;
+
+            int colnum = 0;
+            int typecode;
+	        long int repeat = 0;
+	        long int width = 0;
+            fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            line->xdata.resize(repeat);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, line->xdata.data(), NULL, &status);
+
+            fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            line->ydata.resize(repeat);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, line->ydata.data(), NULL, &status);
+
+            fits_get_colnum(fptr, CASEINSEN, "XERRL", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            if (repeat)
+            {
+                std::vector<float> xerrl(repeat);
+                fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, xerrl.data(), NULL, &status);
+                line->xerr.push_back(xerrl);
+            }
+
+            fits_get_colnum(fptr, CASEINSEN, "XERRU", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            if (repeat)
+            {
+                std::vector<float> xerru(repeat);
+                fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, xerru.data(), NULL, &status);
+                line->xerr.push_back(xerru);
+            }
+
+            fits_get_colnum(fptr, CASEINSEN, "YERRL", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            if (repeat)
+            {
+                std::vector<float> yerrl(repeat);
+                fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, yerrl.data(), NULL, &status);
+                line->yerr.push_back(yerrl);
+            }
+
+            fits_get_colnum(fptr, CASEINSEN, "YERRU", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            if (repeat)
+            {
+                std::vector<float> yerru(repeat);
+                fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, yerru.data(), NULL, &status);
+                line->yerr.push_back(yerru);
+            }
+
+            for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+            {
+                if (ax->id == line->axesid)
+                {
+                    ax->plots.push_back(std::move(line));
+                    break;
+                }
+            }
+        }
+        else if (strcmp(value, "Histogram") == 0)
+        {
+            std::unique_ptr<PHistogram> line(new PHistogram);
+
+            fits_read_key(fptr, TINT, "AXES", &(line->axesid), NULL, &status);
+            fits_read_key(fptr, TINT, "ID", &(line->id), NULL, &status);
+            fits_read_key(fptr, TSTRING, "HISTTYPE", value, NULL, &status);
+            line->histtype = value;
+            fits_read_key(fptr, TSTRING, "LINESTY", value, NULL, &status);
+            line->linestyle = value;
+            fits_read_key(fptr, TSTRING, "LINEWID", value, NULL, &status);
+            line->linewidth = value;
+            fits_read_key(fptr, TSTRING, "COLOR", value, NULL, &status);
+            line->color = value;
+            fits_read_key(fptr, TFLOAT, "DATMIN", &(line->datmin), NULL, &status);
+            fits_read_key(fptr, TFLOAT, "DATMAX", &(line->datmax), NULL, &status);
+            fits_read_key(fptr, TINT, "NBIN", &(line->nbin), NULL, &status);
+
+            int colnum = 0;
+            int typecode;
+	        long int repeat = 0;
+	        long int width = 0;
+            fits_get_colnum(fptr, CASEINSEN, "DATA", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            line->data.resize(repeat);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, line->data.data(), NULL, &status);
+
+            for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+            {
+                if (ax->id == line->axesid)
+                {
+                    ax->plots.push_back(std::move(line));
+                    break;
+                }
+            }
+        }
+        else if (strcmp(value, "Step") == 0)
+        {
+            std::unique_ptr<PStep> line(new PStep);
+
+            fits_read_key(fptr, TINT, "AXES", &(line->axesid), NULL, &status);
+            fits_read_key(fptr, TINT, "ID", &(line->id), NULL, &status);
+            fits_read_key(fptr, TSTRING, "LINESTY", value, NULL, &status);
+            line->linestyle = value;
+            fits_read_key(fptr, TSTRING, "LINEWID", value, NULL, &status);
+            line->linewidth = value;
+            fits_read_key(fptr, TSTRING, "COLOR", value, NULL, &status);
+            line->color = value;
+            fits_read_key(fptr, TSTRING, "WHERE", value, NULL, &status);
+            line->where = value;
+
+            int colnum = 0;
+            int typecode;
+	        long int repeat = 0;
+	        long int width = 0;
+            fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            line->xdata.resize(repeat);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, line->xdata.data(), NULL, &status);
+
+            fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            line->ydata.resize(repeat);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, line->ydata.data(), NULL, &status);
+
+            for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+            {
+                if (ax->id == line->axesid)
+                {
+                    ax->plots.push_back(std::move(line));
+                    break;
+                }
+            }
+        }
+        else if (strcmp(value, "Pcolor") == 0)
+        {
+            std::unique_ptr<PPcolor> img(new PPcolor);
+
+            fits_read_key(fptr, TINT, "AXES", &(img->axesid), NULL, &status);
+            fits_read_key(fptr, TINT, "ID", &(img->id), NULL, &status);
+            fits_read_key(fptr, TSTRING, "CMAP", value, NULL, &status);
+            img->cmap = value;
+
+            int colnum = 0;
+            int typecode;
+	        long int repeat = 0;
+	        long int width = 0;
+            fits_get_colnum(fptr, CASEINSEN, "XDATA", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            img->xdata.resize(repeat);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, img->xdata.data(), NULL, &status);
+
+            fits_get_colnum(fptr, CASEINSEN, "YDATA", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            img->ydata.resize(repeat);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, img->ydata.data(), NULL, &status);
+
+            fits_get_colnum(fptr, CASEINSEN, "ZDATA", &colnum, &status);
+            fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+            img->zdata.resize(repeat);
+            fits_read_col(fptr, TFLOAT, colnum, 1, 1, repeat, NULL, img->zdata.data(), NULL, &status);
+
+            for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+            {
+                if (ax->id == img->axesid)
+                {
+                    ax->plots.push_back(std::move(img));
+                    break;
+                }
+            }
+        }
+        else if (strcmp(value, "Meta") == 0)
+        {
+            fits_get_num_rows(fptr, &nrows, &status);
+            for (long int k=0; k<nrows; k++)
+            {
+                std::unique_ptr<PText> text(new PText);
+
+                int colnum = 0;
+                fits_get_colnum(fptr, CASEINSEN, "AXES", &colnum, &status);
+                fits_read_col(fptr, TINT, colnum, k+1, 1, 1, NULL, &(text->axesid), NULL, &status);
+            
+                fits_get_colnum(fptr, CASEINSEN, "ID", &colnum, &status);
+                fits_read_col(fptr, TINT, colnum, k+1, 1, 1, NULL, &(text->id), NULL, &status);
+
+                fits_get_colnum(fptr, CASEINSEN, "X", &colnum, &status);
+                fits_read_col(fptr, TFLOAT, colnum, k+1, 1, 1, NULL, &(text->x), NULL, &status);
+
+                fits_get_colnum(fptr, CASEINSEN, "Y", &colnum, &status);
+                fits_read_col(fptr, TFLOAT, colnum, k+1, 1, 1, NULL, &(text->y), NULL, &status);
+
+
+                int typecode;
+	            long int repeat = 0;
+	            long int width = 0;
+                fits_get_colnum(fptr, CASEINSEN, "TEXT", &colnum, &status);
+                fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+                char *txt = new char [repeat+1];
+                fits_read_col(fptr, TSTRING, colnum, k+1, 1, 1, NULL, &txt, 0, &status);
+                text->text = txt;
+                delete [] txt;
+                txt = NULL;
+
+                repeat = 0;
+	            width = 0;
+                fits_get_colnum(fptr, CASEINSEN, "XYCOORDS", &colnum, &status);
+                fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+                txt = new char [repeat+1];
+                fits_read_col(fptr, TSTRING, colnum, k+1, 1, 1, NULL, &txt, 0, &status);
+                text->xycoords = txt;
+                delete [] txt;
+                txt = NULL;
+
+                repeat = 0;
+	            width = 0;
+                fits_get_colnum(fptr, CASEINSEN, "FONTSIZE", &colnum, &status);
+                fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+                txt = new char [repeat+1];
+                fits_read_col(fptr, TSTRING, colnum, k+1, 1, 1, NULL, &txt, 0, &status);
+                text->fontsize = txt;
+                delete [] txt;
+                txt = NULL;
+
+                repeat = 0;
+	            width = 0;
+                fits_get_colnum(fptr, CASEINSEN, "COLOR", &colnum, &status);
+                fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+                txt = new char [repeat+1];
+                fits_read_col(fptr, TSTRING, colnum, k+1, 1, 1, NULL, &txt, 0, &status);
+                text->color = txt;
+                delete [] txt;
+                txt = NULL;
+
+                repeat = 0;
+	            width = 0;
+                fits_get_colnum(fptr, CASEINSEN, "ROTAT", &colnum, &status);
+                fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+                txt = new char [repeat+1];
+                fits_read_col(fptr, TSTRING, colnum, k+1, 1, 1, NULL, &txt, 0, &status);
+                text->rotation = txt;
+                delete [] txt;
+                txt = NULL;
+
+                repeat = 0;
+	            width = 0;
+                fits_get_colnum(fptr, CASEINSEN, "REFPOS", &colnum, &status);
+                fits_get_coltype(fptr, colnum, &typecode, &repeat, &width, &status);
+                txt = new char [repeat+1];
+                fits_read_col(fptr, TSTRING, colnum, k+1, 1, 1, NULL, &txt, 0, &status);
+                text->refpos = txt;
+                delete [] txt;
+                txt = NULL;
+
+                for (auto ax=axes.begin(); ax!=axes.end(); ++ax)
+                {
+                    if (ax->id == text->axesid)
+                    {
+                        ax->plots.push_back(std::move(text));
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    fits_close_file(fptr, &status);
+    fits_report_error(stderr, status);
+
+    return *this;
+#else
+    std::cerr<<"Warning: cfitsio not found, can not load px file"<<std::endl;
+    return *this;
+#endif
 }
 
 int PlotX::get_linestyle(const std::string &linestyle)

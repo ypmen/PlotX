@@ -15,6 +15,7 @@ AC_PROG_CC
 LT_INIT
 # Checks for libraries.
 AC_CHECK_LIB([png], [png_set_flush], [], [echo "library not found!";exit -1])
+AC_CHECK_LIB([cfitsio], [ffgky], [], [echo "cfitsio library was not found!"])
 BEAR_LIB_PGPLOT([echo "library found"], [echo "library not found!";exit -1])
 
 AC_OPENMP

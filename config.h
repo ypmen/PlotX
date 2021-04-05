@@ -13,6 +13,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the `cfitsio' library (-lcfitsio). */
+#define HAVE_LIBCFITSIO 1
+
 /* Define to 1 if you have the `png' library (-lpng). */
 #define HAVE_LIBPNG 1
 

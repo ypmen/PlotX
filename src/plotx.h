@@ -35,7 +35,7 @@ namespace PlotX
     class PPlot
     {
     public:
-        PPlot(){_autoscalex = false; _autoscaley = false;}
+        PPlot(){_autoscalex = false; _autoscaley = false; axesid = 0; axesid = 0; id = 0;}
         virtual ~PPlot(){}
         virtual PPlot & draw(bool logx, bool logy){return *this;};
         virtual PPlot * clone()
@@ -52,9 +52,15 @@ namespace PlotX
 
             return *this;
         }
+#ifdef HAVE_LIBCFITSIO
+        virtual PPlot & writehdu(fitsfile *fptr){return *this;}
+#endif
     public:
         bool _autoscalex;
         bool _autoscaley;
+        int axesid;
+        int id;
+        std::string plotname;
     };
 
     class PLine : public PPlot
@@ -66,6 +72,9 @@ namespace PlotX
         PLine & draw(bool logx=false, bool logy=false);
         PLine * clone();
         void get_win(float &xmin, float &xmax, float &ymin, float &ymax);
+#ifdef HAVE_LIBCFITSIO
+        PLine & writehdu(fitsfile *fptr);
+#endif
     public:
         std::vector<float> xdata;
         std::vector<float> ydata;
@@ -83,6 +92,9 @@ namespace PlotX
         PAxvline & draw(bool logx=false, bool logy=false);
         PAxvline * clone();
         void get_win(float &xmin, float &xmax, float &ymin, float &ymax);
+#ifdef HAVE_LIBCFITSIO
+        PAxvline & writehdu(fitsfile *fptr);
+#endif
     public:
         float x;
         float _ymin;
@@ -101,6 +113,9 @@ namespace PlotX
         PAxhline & draw(bool logx=false, bool logy=false);
         PAxhline * clone();
         void get_win(float &xmin, float &xmax, float &ymin, float &ymax);
+#ifdef HAVE_LIBCFITSIO
+        PAxhline & writehdu(fitsfile *fptr);
+#endif
     public:
         float y;
         float _xmin;
@@ -119,6 +134,9 @@ namespace PlotX
         PAxvspan & draw(bool logx=false, bool logy=false);
         PAxvspan * clone();
         void get_win(float &xmin, float &xmax, float &ymin, float &ymax);
+#ifdef HAVE_LIBCFITSIO
+        PAxvspan & writehdu(fitsfile *fptr);
+#endif
     public:
         float _xmin;
         float _xmax;
@@ -139,6 +157,9 @@ namespace PlotX
         PAxhspan & draw(bool logx=false, bool logy=false);
         PAxhspan * clone();
         void get_win(float &xmin, float &xmax, float &ymin, float &ymax);
+#ifdef HAVE_LIBCFITSIO
+        PAxhspan & writehdu(fitsfile *fptr);
+#endif
     public:
         float _ymin;
         float _ymax;
@@ -159,6 +180,9 @@ namespace PlotX
         PScatter & draw(bool logx=false, bool logy=false);
         PScatter * clone();
         void get_win(float &xmin, float &xmax, float &ymin, float &ymax);
+#ifdef HAVE_LIBCFITSIO
+        PScatter & writehdu(fitsfile *fptr);
+#endif
     public:
         std::vector<float> xdata;
         std::vector<float> ydata;
@@ -176,6 +200,9 @@ namespace PlotX
         PPoint & draw(bool logx=false, bool logy=false);
         PPoint * clone();
         void get_win(float &xmin, float &xmax, float &ymin, float &ymax);
+#ifdef HAVE_LIBCFITSIO
+        PPoint & writehdu(fitsfile *fptr);
+#endif
     public:
         float x;
         float y;
@@ -193,6 +220,9 @@ namespace PlotX
         PPcolor & draw(bool logx=false, bool logy=false);
         PPcolor * clone();
         void get_win(float &xmin, float &xmax, float &ymin, float &ymax);
+#ifdef HAVE_LIBCFITSIO
+        PPcolor & writehdu(fitsfile *fptr);
+#endif
         PPcolor & autoscale(bool autoscalex, bool autoscaley)
         {
             _autoscalex = true;
@@ -217,6 +247,9 @@ namespace PlotX
         PErrorbar & draw(bool logx=false, bool logy=false);
         PErrorbar * clone();
         void get_win(float &xmin, float &xmax, float &ymin, float &ymax);
+#ifdef HAVE_LIBCFITSIO
+        PErrorbar & writehdu(fitsfile *fptr);
+#endif
     public:
         std::vector<float> xdata;
         std::vector<float> ydata;
@@ -239,6 +272,9 @@ namespace PlotX
         PText & draw(bool logx=false, bool logy=false);
         PText * clone();
         void get_win(float &xmin, float &xmax, float &ymin, float &ymax){}
+#ifdef HAVE_LIBCFITSIO
+        PText & writehdu(fitsfile *fptr);
+#endif
     public:
         float x;
         float y;
@@ -259,6 +295,9 @@ namespace PlotX
         PHistogram & draw(bool logx=false, bool logy=false);
         PHistogram * clone();
         void get_win(float &xmin, float &xmax, float &ymin, float &ymax);
+#ifdef HAVE_LIBCFITSIO
+        PHistogram & writehdu(fitsfile *fptr);
+#endif
         PHistogram & autoscale(bool autoscalex, bool autoscaley)
         {
             _autoscalex = autoscalex;
@@ -286,6 +325,9 @@ namespace PlotX
         PStep & draw(bool logx=false, bool logy=false);
         PStep * clone();
         void get_win(float &xmin, float &xmax, float &ymin, float &ymax);
+#ifdef HAVE_LIBCFITSIO
+        PStep & writehdu(fitsfile *fptr);
+#endif
     public:
         std::vector<float> xdata;
         std::vector<float> ydata;
@@ -359,6 +401,8 @@ namespace PlotX
             plots.clear();
             plots.shrink_to_fit();
 
+            cnt = 0;
+
             return *this;
         }
         Axes & set_xlim(float xmin, float xmax)
@@ -418,13 +462,19 @@ namespace PlotX
 
         Axes & autoscale(bool enable = true, std::string axis="both", bool tight=true);
         Axes & draw();
+#ifdef HAVE_LIBCFITSIO
+        Axes & writehdu(fitsfile *fptr);
+#endif
     private:
         void get_opt(std::string &xopt, std::string &yopt);
     public:
         void get_win();
-    private:
+    public:
         std::vector<std::unique_ptr<PPlot>> plots;
-    private:
+    public:
+        int cnt;
+        int id;
+    public:
         /* viewport */
         float _left;
         float _right;
@@ -493,11 +543,18 @@ namespace PlotX
             axes.clear();
             axes.shrink_to_fit();
 
+            cnt = 0;
+
             return *this;
         }
+        Figure & savepx(const std::string &fname);
+        Figure & loadpx(const std::string &fname);
+    public:
+        int cnt;
     private:
         float _width;
         float _aspect;
+        std::string _figname;
         std::string _background_color;
         std::string _default_color;
         std::vector<Axes> axes;
