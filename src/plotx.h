@@ -20,7 +20,10 @@
 #include <numeric>
 #include <algorithm>
 
-#include "cpgplot.h"
+#include <cpgplot.h>
+#ifdef HAVE_LIBCFITSIO
+    #include <fitsio.h>
+#endif
 
 namespace PlotX
 {
