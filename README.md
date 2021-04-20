@@ -6,7 +6,7 @@ This is a matplotlib-like c++ wrapper for pgplot!
 
 ## Install
 - ./bootstrap
-- ./configure --prefix=[install_path]
+- ./configure --prefix=[install_path] CXXFLAGS="-std=c++11"
 - make
 - make install
 
