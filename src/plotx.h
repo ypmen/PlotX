@@ -287,6 +287,7 @@ namespace PlotX
         std::string color;
         std::string rotation;
         std::string refpos;
+        std::string linewidth;
     };
 
     class PHistogram : public PPlot

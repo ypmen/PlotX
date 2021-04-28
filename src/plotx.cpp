@@ -703,6 +703,10 @@ Axes & Axes::annotate(const std::string &text, float x, float y, const std::map<
         {
             txt->refpos = item->second;
         }
+        else if (item->first == "linewidth")
+        {
+            txt->linewidth = item->second;
+        }
         else
         {
             std::cerr<<"Warning: attribute not supported"<<std::endl;
@@ -2248,6 +2252,9 @@ PText & PText::draw(bool logx, bool logy)
 
     /* set fontsize */
     cpgsch(get_height(fontsize));
+
+    /* set linewidth */
+    cpgslw(get_linewidth(linewidth));
 
     /* set ref position of text*/
     float fjust = 0;
