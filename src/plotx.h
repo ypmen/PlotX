@@ -540,8 +540,8 @@ namespace PlotX
         Figure & push(Axes &ax);
         Figure & set_background_color(const std::string &color){ _background_color = color; return *this;}
         Figure & set_default_color(const std::string &color){_default_color = color; return *this;}
-        Figure & show();
-        Figure & save(const std::string &fname);
+        Figure & show(bool iden=true);
+        Figure & save(const std::string &fname, bool iden=true);
         Figure & clear()
         {
             axes.clear();

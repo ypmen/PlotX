@@ -2632,7 +2632,7 @@ Figure & Figure::push(Axes &ax)
     return *this;
 }
 
-Figure & Figure::show()
+Figure & Figure::show(bool iden)
 {
     if (!cpgopen("/XW")) return *this;
 
@@ -2651,13 +2651,15 @@ Figure & Figure::show()
     {
         ax->draw();
     }
+
+    if (iden) cpgiden();
     
     cpgclos();
 
     return *this;
 }
 
-Figure & Figure::save(const std::string &fname)
+Figure & Figure::save(const std::string &fname, bool iden)
 {
     if (!cpgopen(fname.c_str())) return *this;
     
@@ -2676,6 +2678,8 @@ Figure & Figure::save(const std::string &fname)
     {
         ax->draw();
     }
+
+    if (iden) cpgiden();
 
     cpgclos();
 
