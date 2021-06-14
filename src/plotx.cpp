@@ -1443,6 +1443,7 @@ void PAxvline::get_win(float &xmin, float &xmax, float &ymin, float &ymax)
     xmax = x;
 }
 
+#ifdef HAVE_LIBCFITSIO
 PAxvline & PAxvline::writehdu(fitsfile *fptr)
 {
     int status = 0;
@@ -1477,6 +1478,7 @@ PAxvline & PAxvline::writehdu(fitsfile *fptr)
 
     return *this;
 }
+#endif
 
 /*================== PAxhline =================*/
 PAxhline & PAxhline::draw(bool logx, bool logy)
